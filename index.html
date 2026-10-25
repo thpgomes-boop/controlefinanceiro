@@ -64,18 +64,21 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
+                    <!-- Checkbox de Status (Executado / Planejado) -->
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Status</label>
-                            <select id="status" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                <option value="Executado">Executado</option>
-                                <option value="Planejado">Planejado</option>
-                            </select>
+                            <span class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-300">Status do Lançamento</span>
+                            <span class="text-[11px] text-slate-400">Marcado = Executado | Desmarcado = Planejado</span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data</label>
-                            <input type="date" id="data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="status-executado" checked class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data</label>
+                        <input type="date" id="data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
                     <!-- Valor Estilo PIX / Banco -->
@@ -381,10 +384,14 @@
                 return;
             }
 
+            // Se o checkbox estiver marcado = Executado, senão Planejado
+            const statusCheckbox = document.getElementById('status-executado').checked;
+            const statusStr = statusCheckbox ? 'Executado' : 'Planejado';
+
             const nova = {
                 id: Date.now(),
                 tipo: tipoAtual,
-                status: document.getElementById('status').value,
+                status: statusStr,
                 data: document.getElementById('data').value,
                 categoria: document.getElementById('categoria').value,
                 subcategoria: document.getElementById('subcategoria').value,
@@ -396,7 +403,7 @@
             transacoes.push(nova);
             localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
             
-            // Resetar formulário
+            // Resetar formulário (mantém o checkbox marcado por padrão para agilizar)
             document.getElementById('valor-input').value = '';
             valorNumericoReal = 0;
             document.getElementById('descricao').value = '';
@@ -440,117 +447,4 @@
         function atualizarDados() {
             const mesFiltro = document.getElementById('filtro-mes').value;
             const transacoesFiltradas = transacoes.filter(t => t.data.startsWith(mesFiltro));
-            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
-
-            let totalReceitas = 0;
-            let totalDespesas = 0;
-
-            const listaEl = document.getElementById('lista-transacoes');
-            listaEl.innerHTML = '';
-
-            if (transacoesFiltradas.length === 0) {
-                listaEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm">Nenhum lançamento neste mês.</div>`;
-            }
-
-            transacoesFiltradas.forEach(t => {
-                if (t.status === 'Executado') {
-                    if (t.tipo === 'Receita') totalReceitas += t.valor;
-                    else totalDespesas += t.valor;
-                }
-
-                const div = document.createElement('div');
-                div.className = "p-3.5 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
-                div.innerHTML = `
-                    <div class="space-y-0.5">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${t.categoria} (${t.subcategoria})</span>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'} font-medium">${t.status}</span>
-                            <span class="text-[10px] text-slate-400">• ${formatarData(t.data)}</span>
-                        </div>
-                        <p class="text-xs text-slate-600 dark:text-slate-300">${t.descricao} <span class="text-[10px] text-slate-400">(${t.pagamento})</span></p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm font-bold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'}">
-                            ${t.tipo === 'Receita' ? '+' : '-'} R$ ${t.valor.toFixed(2).replace('.', ',')}
-                        </span>
-                        <button onclick="excluirTransacao(${t.id})" class="text-slate-300 hover:text-rose-500 transition p-1">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
-                    </div>
-                `;
-                listaEl.appendChild(div);
-            });
-
-            const saldo = totalReceitas - totalDespesas;
-            document.getElementById('card-saldo').textContent = `R$ ${saldo.toFixed(2).replace('.', ',')}`;
-            document.getElementById('card-saldo').className = `text-xl font-bold mt-0.5 ${saldo >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
-            document.getElementById('card-receitas').textContent = `R$ ${totalReceitas.toFixed(2).replace('.', ',')}`;
-            document.getElementById('card-despesas').textContent = `R$ ${totalDespesas.toFixed(2).replace('.', ',')}`;
-            document.getElementById('total-registros').textContent = `${transacoesFiltradas.length} reg.`;
-
-            atualizarGraficos(transacoesFiltradas);
-        }
-
-        function formatarData(dataIso) {
-            const [ano, mes, dia] = dataIso.split('-');
-            return `${dia}/${mes}`;
-        }
-
-        function atualizarGraficos(filtradas) {
-            const executadas = filtradas.filter(t => t.status === 'Executado');
-            const recTotal = executadas.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + t.valor, 0);
-            const despTotal = executadas.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + t.valor, 0);
-
-            const ctxBar = document.getElementById('barChart').getContext('2d');
-            if (barChartInstance) barChartInstance.destroy();
-            barChartInstance = new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: ['Receitas', 'Despesas'],
-                    datasets: [{
-                        data: [recTotal, despTotal],
-                        backgroundColor: ['#10b981', '#f43f5e'],
-                        borderRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
-                }
-            });
-
-            const despesasPorCat = {};
-            executadas.filter(t => t.tipo === 'Despesa').forEach(t => {
-                despesasPorCat[t.categoria] = (despesasPorCat[t.categoria] || 0) + t.valor;
-            });
-
-            const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
-            if (doughnutChartInstance) doughnutChartInstance.destroy();
-            doughnutChartInstance = new Chart(ctxDoughnut, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(despesasPorCat),
-                    datasets: [{
-                        data: Object.values(despesasPorCat),
-                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
-                }
-            });
-        }
-
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            const icon = document.getElementById('theme-icon');
-            html.classList.toggle('dark');
-            icon.className = html.classList.contains('dark') ? "fa-solid fa-moon text-sm" : "fa-solid fa-sun text-sm";
-        }
-    </script>
-</body>
-</html>
+            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date
