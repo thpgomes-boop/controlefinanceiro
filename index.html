@@ -169,7 +169,7 @@
                     <h3 class="text-sm font-semibold">Análise de Cenários (Superávit / Déficit)</h3>
                     <span id="badge-cenario" class="text-[10px] px-2 py-0.5 rounded-full font-bold">--</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mb-4">Início no topo (sentido horário): Executado seguido de Planejado.</p>
+                <p class="text-[11px] text-slate-400 mb-4">Início no topo (sentido horário): Maior valor por fora.</p>
                 <div class="relative h-64 flex justify-center">
                     <canvas id="concentricChart"></canvas>
                 </div>
@@ -494,35 +494,38 @@
 
             const totalRec = recExec + recPlan;
             const totalDesp = despExec + despPlan;
-            const maxVal = Math.max(totalRec, totalDesp);
 
             const badgeCenario = document.getElementById('badge-cenario');
             
-            let outerLabels, outerData, outerColors;
-            let innerLabels, innerData, innerColors;
+            let outerData, outerColors;
+            let innerData, innerColors;
 
             if (totalRec >= totalDesp) {
-                // SUPERÁVIT: Receitas por fora (Verde sólido/esmaecido), Despesas por dentro (Vermelho) + Azul para preencher a sobra
+                // SUPERÁVIT: Verde por fora (Dataset 0), Vermelho + Azul por dentro (Dataset 1)
                 badgeCenario.textContent = "SUPERÁVIT";
                 badgeCenario.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400";
                 
+                // Dataset 0: Externo (Receitas)
                 outerData = [recExec, recPlan];
                 outerColors = ['#10b981', '#34d399'];
 
+                // Dataset 1: Interno (Despesas + Azul de sobra)
                 const diff = totalRec - totalDesp;
                 innerData = [despExec, despPlan, diff];
-                innerColors = ['#f43f5e', '#fb7185', '#3b82f6']; // Vermelho sólido, vermelho claro, azul de sobra
+                innerColors = ['#f43f5e', '#fb7185', '#3b82f6'];
             } else {
-                // DÉFICIT: Despesas por fora (Vermelho sólido/esmaecido), Receitas por dentro (Verde) + Amarelo para preencher a sobra
+                // DÉFICIT: Vermelho por fora (Dataset 0), Verde + Amarelo por dentro (Dataset 1)
                 badgeCenario.textContent = "DÉFICIT";
                 badgeCenario.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400";
 
+                // Dataset 0: Externo (Despesas)
                 outerData = [despExec, despPlan];
                 outerColors = ['#f43f5e', '#fb7185'];
 
+                // Dataset 1: Interno (Receitas + Amarelo de déficit)
                 const diff = totalDesp - totalRec;
                 innerData = [recExec, recPlan, diff];
-                innerColors = ['#10b981', '#34d399', '#f59e0b']; // Verde sólido, verde claro, amarelo de déficit
+                innerColors = ['#10b981', '#34d399', '#f59e0b'];
             }
 
             const ctxConc = document.getElementById('concentricChart').getContext('2d');
@@ -533,15 +536,15 @@
                 data: {
                     datasets: [
                         {
-                            // Anel Interno
-                            data: innerData,
-                            backgroundColor: innerColors,
+                            // Dataset 0: Anel Externo
+                            data: outerData,
+                            backgroundColor: outerColors,
                             borderWidth: 0
                         },
                         {
-                            // Anel Externo
-                            data: outerData,
-                            backgroundColor: outerColors,
+                            // Dataset 1: Anel Interno
+                            data: innerData,
+                            backgroundColor: innerColors,
                             borderWidth: 0
                         }
                     ]
@@ -549,7 +552,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    rotation: -90, // Começa do topo (12h) no sentido horário
+                    rotation: -90, // Inicia no topo (12h) no sentido horário
                     circumference: 360,
                     plugins: { 
                         legend: { 
