@@ -84,28 +84,28 @@
                         <input type="text" id="valor-input" placeholder="R$ 0,00" required oninput="formatarValorPix(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
-                    <!-- Categoria -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold uppercase text-slate-400">Categoria</label>
-                            <button type="button" onclick="abrirModalItem('categoria')" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
-                                <i class="fa-solid fa-plus"></i> <span>Nova Categoria</span>
+                    <!-- Bloco Categoria -->
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-300">Categoria</label>
+                            <button type="button" onclick="abrirModalItem('categoria')" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
+                                <i class="fa-solid fa-plus-circle"></i> <span>Nova Categoria</span>
                             </button>
                         </div>
-                        <select id="categoria" onchange="atualizarSubcategorias()" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <select id="categoria" onchange="atualizarSubcategorias()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             <!-- Preenchido via JS -->
                         </select>
                     </div>
 
-                    <!-- Subcategoria -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold uppercase text-slate-400">Subcategoria</label>
-                            <button type="button" onclick="abrirModalItem('subcategoria')" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
-                                <i class="fa-solid fa-plus"></i> <span>Nova Subcategoria</span>
+                    <!-- Bloco Subcategoria -->
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-300">Subcategoria</label>
+                            <button type="button" onclick="abrirModalItem('subcategoria')" class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
+                                <i class="fa-solid fa-plus-circle"></i> <span>Nova Subcategoria</span>
                             </button>
                         </div>
-                        <select id="subcategoria" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <select id="subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             <!-- Preenchido via JS -->
                         </select>
                     </div>
@@ -123,7 +123,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição Detalhada / Observação</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição / Observação</label>
                         <input type="text" id="descricao" placeholder="Ex: Supermercado mensal..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
@@ -226,7 +226,6 @@
     <script>
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
 
-        // Estrutura de Categorias e Subcategorias
         let estruturaCategorias = JSON.parse(localStorage.getItem('finance_estrutura')) || {
             Receita: {
                 "Salário": ["Salário Mensal", "13º Salário e Bônus"],
@@ -250,8 +249,8 @@
 
         let transacoes = JSON.parse(localStorage.getItem('finance_transacoes')) || [];
         let tipoAtual = 'Despesa';
-        let tipoModalAtual = ''; // 'categoria' ou 'subcategoria'
-        let valorNumericoReal = 0; // Armazena o valor decimal puro
+        let tipoModalAtual = ''; 
+        let valorNumericoReal = 0; 
         let barChartInstance = null;
         let doughnutChartInstance = null;
 
@@ -263,7 +262,6 @@
             atualizarDados();
         });
 
-        // Formatação Monetária Estilo PIX de Banco
         function formatarValorPix(input) {
             let apenasNumeros = input.value.replace(/\D/g, '');
             if (!apenasNumeros) apenasNumeros = '0';
@@ -377,6 +375,12 @@
 
         async function salvarTransacao(e) {
             e.preventDefault();
+            
+            if (valorNumericoReal <= 0) {
+                alert('Por favor, informe um valor válido.');
+                return;
+            }
+
             const nova = {
                 id: Date.now(),
                 tipo: tipoAtual,
@@ -411,7 +415,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             ...nova,
-                            categoria: `${nova.categoria} > ${nova.subcategoria}` // Compatibilidade com a planilha
+                            categoria: `${nova.categoria} > ${nova.subcategoria}`
                         })
                     });
                     statusEl.textContent = "Salvo no Drive!";
