@@ -162,14 +162,14 @@
             </div>
         </section>
 
-        <!-- ABA 3: GRÁFICOS (ANÉIS CONCÊNTRICOS / CENÁRIOS) -->
+        <!-- ABA 3: GRÁFICOS (ANÉIS CONCÊNTRICOS) -->
         <section id="view-graficos" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-semibold">Análise de Cenários (Superávit / Déficit)</h3>
                     <span id="badge-cenario" class="text-[10px] px-2 py-0.5 rounded-full font-bold">--</span>
                 </div>
-                <p class="text-[11px] text-slate-400 mb-4">Anéis concêntricos comparando Executado vs Planejado.</p>
+                <p class="text-[11px] text-slate-400 mb-4">Início no topo (sentido horário): Executado seguido de Planejado.</p>
                 <div class="relative h-64 flex justify-center">
                     <canvas id="concentricChart"></canvas>
                 </div>
@@ -211,7 +211,7 @@
         </div>
     </div>
 
-    <!-- Barra de Navegação Inferior com 4 Botões -->
+    <!-- Barra de Navegação Inferior -->
     <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
         <div class="max-w-md mx-auto grid grid-cols-4 py-2">
             <button onclick="mudarAba('lancamento')" id="tab-btn-lancamento" class="flex flex-col items-center justify-center space-y-1 text-emerald-600 dark:text-emerald-400 transition">
@@ -492,38 +492,56 @@
             const despExec = filtradas.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').reduce((a, b) => a + b.valor, 0);
             const despPlan = filtradas.filter(t => t.tipo === 'Despesa' && t.status === 'Planejado').reduce((a, b) => a + b.valor, 0);
 
-            const badgeCenario = document.getElementById('badge-cenario');
             const totalRec = recExec + recPlan;
             const totalDesp = despExec + despPlan;
+            const maxVal = Math.max(totalRec, totalDesp);
+
+            const badgeCenario = document.getElementById('badge-cenario');
+            
+            let outerLabels, outerData, outerColors;
+            let innerLabels, innerData, innerColors;
 
             if (totalRec >= totalDesp) {
+                // SUPERÁVIT: Receitas por fora (Verde sólido/esmaecido), Despesas por dentro (Vermelho) + Azul para preencher a sobra
                 badgeCenario.textContent = "SUPERÁVIT";
                 badgeCenario.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400";
+                
+                outerData = [recExec, recPlan];
+                outerColors = ['#10b981', '#34d399'];
+
+                const diff = totalRec - totalDesp;
+                innerData = [despExec, despPlan, diff];
+                innerColors = ['#f43f5e', '#fb7185', '#3b82f6']; // Vermelho sólido, vermelho claro, azul de sobra
             } else {
+                // DÉFICIT: Despesas por fora (Vermelho sólido/esmaecido), Receitas por dentro (Verde) + Amarelo para preencher a sobra
                 badgeCenario.textContent = "DÉFICIT";
                 badgeCenario.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400";
+
+                outerData = [despExec, despPlan];
+                outerColors = ['#f43f5e', '#fb7185'];
+
+                const diff = totalDesp - totalRec;
+                innerData = [recExec, recPlan, diff];
+                innerColors = ['#10b981', '#34d399', '#f59e0b']; // Verde sólido, verde claro, amarelo de déficit
             }
 
-            // Gráfico de Anéis Concentricos (Estilo da Imagem)
             const ctxConc = document.getElementById('concentricChart').getContext('2d');
             if (concentricChartInstance) concentricChartInstance.destroy();
 
             concentricChartInstance = new Chart(ctxConc, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Receitas Executadas', 'Receitas Planejadas', 'Despesas Executadas', 'Despesas Planejadas'],
                     datasets: [
                         {
-                            label: 'Executado',
-                            data: [recExec, 0, despExec, 0],
-                            backgroundColor: ['#10b981', 'transparent', '#f43f5e', 'transparent'],
-                            borderWidth: 0,
-                            circumference: 360
+                            // Anel Interno
+                            data: innerData,
+                            backgroundColor: innerColors,
+                            borderWidth: 0
                         },
                         {
-                            label: 'Planejado',
-                            data: [0, recPlan, 0, despPlan],
-                            backgroundColor: ['transparent', '#34d399', 'transparent', '#fb7185'],
+                            // Anel Externo
+                            data: outerData,
+                            backgroundColor: outerColors,
                             borderWidth: 0
                         }
                     ]
@@ -531,12 +549,18 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '55%',
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                    rotation: -90, // Começa do topo (12h) no sentido horário
+                    circumference: 360,
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { boxWidth: 10, font: { size: 10 } } 
+                        } 
+                    }
                 }
             });
 
-            // Gráfico de Rosca por Categoria
+            // Gráfico de Rosca por Categoria de Despesa Executada
             const despesasPorCat = {};
             filtradas.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').forEach(t => {
                 despesasPorCat[t.categoria] = (despesasPorCat[t.categoria] || 0) + t.valor;
