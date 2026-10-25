@@ -48,28 +48,12 @@
     <!-- Main Container / Views -->
     <main class="max-w-md mx-auto p-4 space-y-4">
 
-        <!-- ABA 1: NOVO LANÇAMENTO & IMPORTAÇÃO -->
+        <!-- ABA 1: NOVO LANÇAMENTO MANUAL -->
         <section id="view-lancamento" class="space-y-4">
-            
-            <!-- Card de Importação de Contracheque -->
-            <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-3">
-                <h2 class="text-sm font-bold flex items-center space-x-2 text-blue-600 dark:text-blue-400">
-                    <i class="fa-solid fa-file-invoice-dollar"></i>
-                    <span>Importar Contracheque</span>
-                </h2>
-                <p class="text-[11px] text-slate-400">Selecione o PDF ou a foto do contracheque para leitura automática (OCR).</p>
-                <input type="file" id="arquivo-contracheque" accept="application/pdf,image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/40 dark:file:text-blue-400">
-                <button type="button" onclick="enviarContracheque()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs shadow transition flex items-center justify-center space-x-1.5">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>Processar e Lançar Automaticamente</span>
-                </button>
-            </div>
-
-            <!-- Formulário de Lançamento Manual -->
             <div class="bg-white dark:bg-cardBg p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <h2 class="text-base font-bold mb-4 flex items-center space-x-2">
                     <i class="fa-solid fa-circle-plus text-emerald-500"></i>
-                    <span>Novo Lançamento Manual</span>
+                    <span>Novo Lançamento</span>
                 </h2>
                 <form id="form-transacao" onsubmit="salvarTransacao(event)" class="space-y-4">
                     <div>
@@ -92,7 +76,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data (A partir de Nov/2026)</label>
                         <input type="date" id="data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
@@ -178,7 +162,26 @@
             </div>
         </section>
 
-        <!-- ABA 3: GRÁFICOS (ANÉIS CONCÊNTRICOS) -->
+        <!-- ABA 3: CONTRACHEQUE (IMPORTAÇÃO OCR) -->
+        <section id="view-contracheque" class="space-y-4 hidden">
+            <div class="bg-white dark:bg-cardBg p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+                <h2 class="text-base font-bold flex items-center space-x-2 text-blue-600 dark:text-blue-400">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Importar Contracheque</span>
+                </h2>
+                <p class="text-xs text-slate-400">Selecione o ficheiro PDF ou a foto do contracheque para leitura automática (OCR) e lançamento direto nas rubricas corretas.</p>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Ficheiro do Contracheque</label>
+                    <input type="file" id="arquivo-contracheque" accept="application/pdf,image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/40 dark:file:text-blue-400">
+                </div>
+                <button type="button" onclick="enviarContracheque()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Processar e Lançar Automaticamente</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ABA 4: GRÁFICOS (ANÉIS CONCÊNTRICOS) -->
         <section id="view-graficos" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <div class="flex justify-between items-center mb-3">
@@ -196,7 +199,7 @@
             </div>
         </section>
 
-        <!-- ABA 4: CONSULTAS E HISTÓRICO -->
+        <!-- ABA 5: CONSULTAS E HISTÓRICO -->
         <section id="view-historico" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -227,24 +230,28 @@
         </div>
     </div>
 
-    <!-- Barra de Navegação Inferior -->
+    <!-- Barra de Navegação Inferior (5 Botões) -->
     <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
-        <div class="max-w-md mx-auto grid grid-cols-4 py-2">
+        <div class="max-w-md mx-auto grid grid-cols-5 py-2">
             <button onclick="mudarAba('lancamento')" id="tab-btn-lancamento" class="flex flex-col items-center justify-center space-y-1 text-emerald-600 dark:text-emerald-400 transition">
                 <i class="fa-solid fa-plus-circle text-base"></i>
-                <span class="text-[10px] font-medium">Lançar</span>
+                <span class="text-[9px] font-medium">Lançar</span>
             </button>
             <button onclick="mudarAba('resumo')" id="tab-btn-resumo" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
                 <i class="fa-solid fa-wallet text-base"></i>
-                <span class="text-[10px] font-medium">Resumo</span>
+                <span class="text-[9px] font-medium">Resumo</span>
+            </button>
+            <button onclick="mudarAba('contracheque')" id="tab-btn-contracheque" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                <i class="fa-solid fa-file-invoice-dollar text-base"></i>
+                <span class="text-[9px] font-medium">Folha</span>
             </button>
             <button onclick="mudarAba('graficos')" id="tab-btn-graficos" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
                 <i class="fa-solid fa-chart-pie text-base"></i>
-                <span class="text-[10px] font-medium">Gráficos</span>
+                <span class="text-[9px] font-medium">Gráficos</span>
             </button>
             <button onclick="mudarAba('historico')" id="tab-btn-historico" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
                 <i class="fa-solid fa-list-ul text-base"></i>
-                <span class="text-[10px] font-medium">Consultas</span>
+                <span class="text-[9px] font-medium">Consultas</span>
             </button>
         </div>
     </nav>
@@ -281,9 +288,18 @@
         let doughnutChartInstance = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Configurar restrição: Bloquear outubro e focar a partir do mês que vem (Novembro de 2026)
             const hoje = new Date();
-            document.getElementById('filtro-mes').value = hoje.toISOString().slice(0, 7);
-            document.getElementById('data').valueAsDate = hoje;
+            const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+            const proximoMesIso = proximoMes.toISOString().slice(0, 7);
+            const proximoMesDiaIso = proximoMes.toISOString().slice(0, 10);
+
+            document.getElementById('filtro-mes').value = proximoMesIso;
+            
+            const inputData = document.getElementById('data');
+            inputData.min = proximoMesDiaIso;
+            inputData.value = proximoMesDiaIso;
+
             atualizarCategorias();
             atualizarDados();
         });
@@ -292,11 +308,11 @@
             let apenasNumeros = input.value.replace(/\D/g, '');
             if (!apenasNumeros) apenasNumeros = '0';
             valorNumericoReal = parseFloat(apenasNumeros) / 100;
-            input.value = valorNumericoReal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            input.value = valorNumericoReal.toLocaleString('pt-PT', { style: 'currency', currency: 'BRL' });
         }
 
         function mudarAba(aba) {
-            ['lancamento', 'resumo', 'graficos', 'historico'].forEach(a => {
+            ['lancamento', 'resumo', 'contracheque', 'graficos', 'historico'].forEach(a => {
                 document.getElementById(`view-${a}`).classList.add('hidden');
                 document.getElementById(`tab-btn-${a}`).className = "flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition";
             });
@@ -405,7 +421,7 @@
                     arquivoBase64: base64String,
                     mimeType: file.type,
                     nomeArquivo: file.name,
-                    dataReferencia: document.getElementById('data').value || new Date().toISOString().slice(0, 10)
+                    dataReferencia: document.getElementById('data')?.value || new Date().toISOString().slice(0, 10)
                 };
 
                 try {
@@ -454,7 +470,9 @@
             document.getElementById('valor-input').value = '';
             valorNumericoReal = 0;
             document.getElementById('descricao').value = '';
-            document.getElementById('data').valueAsDate = new Date();
+            const hoje = new Date();
+            const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+            document.getElementById('data').value = proximoMes.toISOString().slice(0, 10);
             atualizarDados();
 
             if (APPS_SCRIPT_URL) {
