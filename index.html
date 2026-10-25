@@ -64,7 +64,6 @@
                         </div>
                     </div>
 
-                    <!-- Checkbox de Status (Executado / Planejado) -->
                     <div class="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
                         <div>
                             <span class="block text-xs font-bold uppercase text-slate-500 dark:text-slate-300">Status do Lançamento</span>
@@ -81,7 +80,6 @@
                         <input type="date" id="data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
-                    <!-- Valor Estilo PIX / Banco -->
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor (R$)</label>
                         <input type="text" id="valor-input" placeholder="R$ 0,00" required oninput="formatarValorPix(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
@@ -96,7 +94,6 @@
                             </button>
                         </div>
                         <select id="categoria" onchange="atualizarSubcategorias()" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <!-- Preenchido via JS -->
                         </select>
                     </div>
 
@@ -109,7 +106,6 @@
                             </button>
                         </div>
                         <select id="subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            <!-- Preenchido via JS -->
                         </select>
                     </div>
 
@@ -138,7 +134,7 @@
             </div>
         </section>
 
-        <!-- ABA 2: RESUMO E GRÁFICOS -->
+        <!-- ABA 2: RESUMO (CARDS) -->
         <section id="view-resumo" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg p-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de Referência:</span>
@@ -164,18 +160,27 @@
                     </div>
                 </div>
             </div>
+        </section>
 
+        <!-- ABA 3: GRÁFICOS (ANÉIS CONCÊNTRICOS / CENÁRIOS) -->
+        <section id="view-graficos" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <h3 class="text-sm font-semibold mb-3">Balanço do Mês</h3>
-                <div class="relative h-48"><canvas id="barChart"></canvas></div>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-semibold">Análise de Cenários (Superávit / Déficit)</h3>
+                    <span id="badge-cenario" class="text-[10px] px-2 py-0.5 rounded-full font-bold">--</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-4">Anéis concêntricos comparando Executado vs Planejado.</p>
+                <div class="relative h-64 flex justify-center">
+                    <canvas id="concentricChart"></canvas>
+                </div>
             </div>
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <h3 class="text-sm font-semibold mb-3">Gastos por Categoria</h3>
+                <h3 class="text-sm font-semibold mb-3">Gastos por Categoria (Executado)</h3>
                 <div class="relative h-56 flex justify-center"><canvas id="doughnutChart"></canvas></div>
             </div>
         </section>
 
-        <!-- ABA 3: CONSULTAS E HISTÓRICO -->
+        <!-- ABA 4: CONSULTAS E HISTÓRICO -->
         <section id="view-historico" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
@@ -183,7 +188,6 @@
                     <span id="total-registros" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 reg.</span>
                 </div>
                 <div id="lista-transacoes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[70vh] overflow-y-auto">
-                    <!-- Preenchido via JS -->
                 </div>
             </div>
         </section>
@@ -207,20 +211,24 @@
         </div>
     </div>
 
-    <!-- Barra de Navegação Inferior (Abas) -->
+    <!-- Barra de Navegação Inferior com 4 Botões -->
     <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
-        <div class="max-w-md mx-auto grid grid-cols-3 py-2">
+        <div class="max-w-md mx-auto grid grid-cols-4 py-2">
             <button onclick="mudarAba('lancamento')" id="tab-btn-lancamento" class="flex flex-col items-center justify-center space-y-1 text-emerald-600 dark:text-emerald-400 transition">
-                <i class="fa-solid fa-plus-circle text-lg"></i>
-                <span class="text-[11px] font-medium">Lançar</span>
+                <i class="fa-solid fa-plus-circle text-base"></i>
+                <span class="text-[10px] font-medium">Lançar</span>
             </button>
             <button onclick="mudarAba('resumo')" id="tab-btn-resumo" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                <i class="fa-solid fa-chart-pie text-lg"></i>
-                <span class="text-[11px] font-medium">Resumo</span>
+                <i class="fa-solid fa-wallet text-base"></i>
+                <span class="text-[10px] font-medium">Resumo</span>
+            </button>
+            <button onclick="mudarAba('graficos')" id="tab-btn-graficos" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                <i class="fa-solid fa-chart-pie text-base"></i>
+                <span class="text-[10px] font-medium">Gráficos</span>
             </button>
             <button onclick="mudarAba('historico')" id="tab-btn-historico" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                <i class="fa-solid fa-list-ul text-lg"></i>
-                <span class="text-[11px] font-medium">Consultas</span>
+                <i class="fa-solid fa-list-ul text-base"></i>
+                <span class="text-[10px] font-medium">Consultas</span>
             </button>
         </div>
     </nav>
@@ -254,7 +262,7 @@
         let tipoAtual = 'Despesa';
         let tipoModalAtual = ''; 
         let valorNumericoReal = 0; 
-        let barChartInstance = null;
+        let concentricChartInstance = null;
         let doughnutChartInstance = null;
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -268,17 +276,12 @@
         function formatarValorPix(input) {
             let apenasNumeros = input.value.replace(/\D/g, '');
             if (!apenasNumeros) apenasNumeros = '0';
-            
             valorNumericoReal = parseFloat(apenasNumeros) / 100;
-            
-            input.value = valorNumericoReal.toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL'
-            });
+            input.value = valorNumericoReal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function mudarAba(aba) {
-            ['lancamento', 'resumo', 'historico'].forEach(a => {
+            ['lancamento', 'resumo', 'graficos', 'historico'].forEach(a => {
                 document.getElementById(`view-${a}`).classList.add('hidden');
                 document.getElementById(`tab-btn-${a}`).className = "flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition";
             });
@@ -306,7 +309,6 @@
             const selectCategoria = document.getElementById('categoria');
             selectCategoria.innerHTML = '';
             const categorias = Object.keys(estruturaCategorias[tipoAtual]);
-            
             categorias.forEach(cat => {
                 const opt = document.createElement('option');
                 opt.value = cat;
@@ -320,7 +322,6 @@
             const catSelecionada = document.getElementById('categoria').value;
             const selectSub = document.getElementById('subcategoria');
             selectSub.innerHTML = '';
-            
             const subcategorias = estruturaCategorias[tipoAtual][catSelecionada] || [];
             subcategorias.forEach(sub => {
                 const opt = document.createElement('option');
@@ -332,8 +333,7 @@
 
         function abrirModalItem(tipo) {
             tipoModalAtual = tipo;
-            const titulo = tipo === 'categoria' ? 'Nova Categoria' : 'Nova Subcategoria';
-            document.getElementById('modal-titulo').textContent = titulo;
+            document.getElementById('modal-titulo').textContent = tipo === 'categoria' ? 'Nova Categoria' : 'Nova Subcategoria';
             document.getElementById('modal-item').classList.remove('hidden');
             document.getElementById('modal-item').classList.add('flex');
             document.getElementById('novo-item-input').focus();
@@ -347,10 +347,7 @@
 
         function salvarNovoItem() {
             const nome = document.getElementById('novo-item-input').value.trim();
-            if (!nome) {
-                alert('Digite um nome válido.');
-                return;
-            }
+            if (!nome) return alert('Digite um nome válido.');
 
             if (tipoModalAtual === 'categoria') {
                 if (!estruturaCategorias[tipoAtual][nome]) {
@@ -359,9 +356,7 @@
                     atualizarCategorias();
                     document.getElementById('categoria').value = nome;
                     atualizarSubcategorias();
-                } else {
-                    alert('Esta categoria já existe.');
-                }
+                } else { alert('Esta categoria já existe.'); }
             } else {
                 const catSelecionada = document.getElementById('categoria').value;
                 if (!estruturaCategorias[tipoAtual][catSelecionada].includes(nome)) {
@@ -369,29 +364,20 @@
                     localStorage.setItem('finance_estrutura', JSON.stringify(estruturaCategorias));
                     atualizarSubcategorias();
                     document.getElementById('subcategoria').value = nome;
-                } else {
-                    alert('Esta subcategoria já existe nesta categoria.');
-                }
+                } else { alert('Esta subcategoria já existe.'); }
             }
             fecharModalItem();
         }
 
         async function salvarTransacao(e) {
             e.preventDefault();
-            
-            if (valorNumericoReal <= 0) {
-                alert('Por favor, informe um valor válido.');
-                return;
-            }
+            if (valorNumericoReal <= 0) return alert('Informe um valor válido.');
 
-            // Se o checkbox estiver marcado = Executado, senão Planejado
             const statusCheckbox = document.getElementById('status-executado').checked;
-            const statusStr = statusCheckbox ? 'Executado' : 'Planejado';
-
             const nova = {
                 id: Date.now(),
                 tipo: tipoAtual,
-                status: statusStr,
+                status: statusCheckbox ? 'Executado' : 'Planejado',
                 data: document.getElementById('data').value,
                 categoria: document.getElementById('categoria').value,
                 subcategoria: document.getElementById('subcategoria').value,
@@ -403,7 +389,6 @@
             transacoes.push(nova);
             localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
             
-            // Resetar formulário (mantém o checkbox marcado por padrão para agilizar)
             document.getElementById('valor-input').value = '';
             valorNumericoReal = 0;
             document.getElementById('descricao').value = '';
@@ -412,7 +397,7 @@
 
             if (APPS_SCRIPT_URL) {
                 const statusEl = document.getElementById('sync-status');
-                statusEl.textContent = "Sincronizando...";
+                statusEl.textContent = "Sincronizando com a aba do mês...";
                 statusEl.classList.remove('hidden');
 
                 try {
@@ -425,19 +410,18 @@
                             categoria: `${nova.categoria} > ${nova.subcategoria}`
                         })
                     });
-                    statusEl.textContent = "Salvo no Drive!";
+                    statusEl.textContent = "Salvo na planilha!";
                     setTimeout(() => statusEl.classList.add('hidden'), 3000);
                 } catch (err) {
-                    console.error("Erro ao sincronizar:", err);
+                    console.error("Erro:", err);
                     statusEl.textContent = "Erro na sincronização";
                 }
             }
-
             mudarAba('historico');
         }
 
         function excluirTransacao(id) {
-            if (confirm('Deseja realmente excluir este lançamento?')) {
+            if (confirm('Deseja excluir este lançamento?')) {
                 transacoes = transacoes.filter(t => t.id !== id);
                 localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
                 atualizarDados();
@@ -447,4 +431,142 @@
         function atualizarDados() {
             const mesFiltro = document.getElementById('filtro-mes').value;
             const transacoesFiltradas = transacoes.filter(t => t.data.startsWith(mesFiltro));
-            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date
+            transacoesFiltradas.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+            let totalReceitasExec = 0, totalDespesasExec = 0;
+
+            const listaEl = document.getElementById('lista-transacoes');
+            listaEl.innerHTML = '';
+
+            if (transacoesFiltradas.length === 0) {
+                listaEl.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm">Nenhum lançamento neste mês.</div>`;
+            }
+
+            transacoesFiltradas.forEach(t => {
+                if (t.status === 'Executado') {
+                    if (t.tipo === 'Receita') totalReceitasExec += t.valor;
+                    else totalDespesasExec += t.valor;
+                }
+
+                const div = document.createElement('div');
+                div.className = "p-3.5 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
+                div.innerHTML = `
+                    <div class="space-y-0.5">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${t.categoria} (${t.subcategoria})</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'} font-medium">${t.status}</span>
+                            <span class="text-[10px] text-slate-400">• ${formatarData(t.data)}</span>
+                        </div>
+                        <p class="text-xs text-slate-600 dark:text-slate-300">${t.descricao} <span class="text-[10px] text-slate-400">(${t.pagamento})</span></p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm font-bold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'}">
+                            ${t.tipo === 'Receita' ? '+' : '-'} R$ ${t.valor.toFixed(2).replace('.', ',')}
+                        </span>
+                        <button onclick="excluirTransacao(${t.id})" class="text-slate-300 hover:text-rose-500 transition p-1">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                listaEl.appendChild(div);
+            });
+
+            const saldo = totalReceitasExec - totalDespesasExec;
+            document.getElementById('card-saldo').textContent = `R$ ${saldo.toFixed(2).replace('.', ',')}`;
+            document.getElementById('card-saldo').className = `text-xl font-bold mt-0.5 ${saldo >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`;
+            document.getElementById('card-receitas').textContent = `R$ ${totalReceitasExec.toFixed(2).replace('.', ',')}`;
+            document.getElementById('card-despesas').textContent = `R$ ${totalDespesasExec.toFixed(2).replace('.', ',')}`;
+            document.getElementById('total-registros').textContent = `${transacoesFiltradas.length} reg.`;
+
+            atualizarGraficosConcentricos(transacoesFiltradas);
+        }
+
+        function formatarData(dataIso) {
+            const [ano, mes, dia] = dataIso.split('-');
+            return `${dia}/${mes}`;
+        }
+
+        function atualizarGraficosConcentricos(filtradas) {
+            const recExec = filtradas.filter(t => t.tipo === 'Receita' && t.status === 'Executado').reduce((a, b) => a + b.valor, 0);
+            const recPlan = filtradas.filter(t => t.tipo === 'Receita' && t.status === 'Planejado').reduce((a, b) => a + b.valor, 0);
+            const despExec = filtradas.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').reduce((a, b) => a + b.valor, 0);
+            const despPlan = filtradas.filter(t => t.tipo === 'Despesa' && t.status === 'Planejado').reduce((a, b) => a + b.valor, 0);
+
+            const badgeCenario = document.getElementById('badge-cenario');
+            const totalRec = recExec + recPlan;
+            const totalDesp = despExec + despPlan;
+
+            if (totalRec >= totalDesp) {
+                badgeCenario.textContent = "SUPERÁVIT";
+                badgeCenario.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400";
+            } else {
+                badgeCenario.textContent = "DÉFICIT";
+                badgeCenario.className = "text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-400";
+            }
+
+            // Gráfico de Anéis Concentricos (Estilo da Imagem)
+            const ctxConc = document.getElementById('concentricChart').getContext('2d');
+            if (concentricChartInstance) concentricChartInstance.destroy();
+
+            concentricChartInstance = new Chart(ctxConc, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Receitas Executadas', 'Receitas Planejadas', 'Despesas Executadas', 'Despesas Planejadas'],
+                    datasets: [
+                        {
+                            label: 'Executado',
+                            data: [recExec, 0, despExec, 0],
+                            backgroundColor: ['#10b981', 'transparent', '#f43f5e', 'transparent'],
+                            borderWidth: 0,
+                            circumference: 360
+                        },
+                        {
+                            label: 'Planejado',
+                            data: [0, recPlan, 0, despPlan],
+                            backgroundColor: ['transparent', '#34d399', 'transparent', '#fb7185'],
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '55%',
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                }
+            });
+
+            // Gráfico de Rosca por Categoria
+            const despesasPorCat = {};
+            filtradas.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').forEach(t => {
+                despesasPorCat[t.categoria] = (despesasPorCat[t.categoria] || 0) + t.valor;
+            });
+
+            const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+            if (doughnutChartInstance) doughnutChartInstance.destroy();
+            doughnutChartInstance = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(despesasPorCat),
+                    datasets: [{
+                        data: Object.values(despesasPorCat),
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
+                }
+            });
+        }
+
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            html.classList.toggle('dark');
+            icon.className = html.classList.contains('dark') ? "fa-solid fa-moon text-sm" : "fa-solid fa-sun text-sm";
+        }
+    </script>
+</body>
+</html>
