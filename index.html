@@ -78,19 +78,34 @@
                         </div>
                     </div>
 
+                    <!-- Valor Estilo PIX / Banco -->
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor (R$)</label>
-                        <input type="number" step="0.01" id="valor" placeholder="0,00" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <input type="text" id="valor-input" placeholder="R$ 0,00" required oninput="formatarValorPix(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
+                    <!-- Categoria -->
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold uppercase text-slate-400">Categoria / Subcategoria</label>
-                            <button type="button" onclick="abrirModalCategoria()" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
+                            <label class="block text-xs font-semibold uppercase text-slate-400">Categoria</label>
+                            <button type="button" onclick="abrirModalItem('categoria')" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
                                 <i class="fa-solid fa-plus"></i> <span>Nova Categoria</span>
                             </button>
                         </div>
-                        <select id="categoria" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <select id="categoria" onchange="atualizarSubcategorias()" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <!-- Preenchido via JS -->
+                        </select>
+                    </div>
+
+                    <!-- Subcategoria -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold uppercase text-slate-400">Subcategoria</label>
+                            <button type="button" onclick="abrirModalItem('subcategoria')" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
+                                <i class="fa-solid fa-plus"></i> <span>Nova Subcategoria</span>
+                            </button>
+                        </div>
+                        <select id="subcategoria" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             <!-- Preenchido via JS -->
                         </select>
                     </div>
@@ -108,8 +123,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição Detalhada</label>
-                        <input type="text" id="descricao" placeholder="Ex: Supermercado mensal, Combustível..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição Detalhada / Observação</label>
+                        <input type="text" id="descricao" placeholder="Ex: Supermercado mensal..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
                     <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center justify-center space-x-2">
@@ -172,23 +187,19 @@
 
     </main>
 
-    <!-- Modal Adicionar Categoria -->
-    <div id="modal-categoria" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <!-- Modal Adicionar Categoria / Subcategoria -->
+    <div id="modal-item" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-cardBg w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                <h3 class="font-bold text-sm">Nova Categoria / Subcategoria</h3>
-                <button onclick="fecharModalCategoria()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+                <h3 id="modal-titulo" class="font-bold text-sm">Adicionar</h3>
+                <button onclick="fecharModalItem()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-4 space-y-3">
                 <div>
-                    <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Adicionar na lista de:</label>
-                    <p id="label-tipo-cat" class="text-xs font-bold text-emerald-600 dark:text-emerald-400"></p>
+                    <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Nome</label>
+                    <input type="text" id="novo-item-input" placeholder="Digite o nome..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Nome da Categoria / Subcategoria</label>
-                    <input type="text" id="nova-categoria-input" placeholder="Ex: Investimento FIIs..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                </div>
-                <button onclick="salvarNovaCategoria()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow transition">Adicionar</button>
+                <button onclick="salvarNovoItem()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow transition">Adicionar</button>
             </div>
         </div>
     </div>
@@ -215,13 +226,32 @@
     <script>
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
 
-        let categoriasMap = JSON.parse(localStorage.getItem('finance_categorias')) || {
-            Receita: ["Salário", "Freelance", "Investimentos", "Vendas / Extras", "Adicional Militar", "Outras Receitas"],
-            Despesa: ["Moradia", "Alimentação", "Transporte", "Saúde", "Educação", "Assinaturas", "Lazer", "Compras", "Pensão Militar", "PNR", "FUSEX", "Empréstimo Consignado", "Outros"]
+        // Estrutura de Categorias e Subcategorias
+        let estruturaCategorias = JSON.parse(localStorage.getItem('finance_estrutura')) || {
+            Receita: {
+                "Salário": ["Salário Mensal", "13º Salário e Bônus"],
+                "Freelance": ["Projetos e Consultorias"],
+                "Investimentos": ["Dividendos e Juros"],
+                "Adicional Militar": ["Adicional de Habilitação", "Adicional de Disponibilidade", "Gratificação Especial"]
+            },
+            Despesa: {
+                "Moradia": ["Aluguel e Condomínio", "Energia Elétrica", "Água e Esgoto", "Internet e TV", "Manutenção e Reformas"],
+                "Alimentação": ["Supermercado", "Restaurante e Bares", "Delivery e Lanches", "Feira e Padaria"],
+                "Transporte": ["Combustível", "Transporte Público", "Aplicativos (Uber/99)", "Manutenção e Seguro"],
+                "Saúde": ["Farmácia e Medicamentos", "Consultas e Exames", "Plano de Saúde"],
+                "Educação": ["Cursos e Capacitação", "Livros e Materiais", "Faculdade e Pós"],
+                "Pensão Militar": ["Pensão Militar - Militar de Carreira"],
+                "PNR": ["Ocupação PNR", "PNR - Fundo Ex MNT"],
+                "FUSEX": ["FUSEX (Mensalidade 3%)", "Despesa Médica - FUSEX"],
+                "Empréstimo Consignado": ["Empréstimo Bradesco"],
+                "Outros": ["Imposto de Renda", "Tarifas Bancárias"]
+            }
         };
 
         let transacoes = JSON.parse(localStorage.getItem('finance_transacoes')) || [];
         let tipoAtual = 'Despesa';
+        let tipoModalAtual = ''; // 'categoria' ou 'subcategoria'
+        let valorNumericoReal = 0; // Armazena o valor decimal puro
         let barChartInstance = null;
         let doughnutChartInstance = null;
 
@@ -232,6 +262,19 @@
             atualizarCategorias();
             atualizarDados();
         });
+
+        // Formatação Monetária Estilo PIX de Banco
+        function formatarValorPix(input) {
+            let apenasNumeros = input.value.replace(/\D/g, '');
+            if (!apenasNumeros) apenasNumeros = '0';
+            
+            valorNumericoReal = parseFloat(apenasNumeros) / 100;
+            
+            input.value = valorNumericoReal.toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+        }
 
         function mudarAba(aba) {
             ['lancamento', 'resumo', 'historico'].forEach(a => {
@@ -261,38 +304,75 @@
         function atualizarCategorias() {
             const selectCategoria = document.getElementById('categoria');
             selectCategoria.innerHTML = '';
-            categoriasMap[tipoAtual].forEach(cat => {
+            const categorias = Object.keys(estruturaCategorias[tipoAtual]);
+            
+            categorias.forEach(cat => {
                 const opt = document.createElement('option');
                 opt.value = cat;
                 opt.textContent = cat;
                 selectCategoria.appendChild(opt);
             });
+            atualizarSubcategorias();
         }
 
-        function abrirModalCategoria() {
-            document.getElementById('label-tipo-cat.textContent = tipoAtual').textContent = `Categoria de ${tipoAtual}`;
-            document.getElementById('modal-categoria').classList.remove('hidden');
-            document.getElementById('modal-categoria').classList.add('flex');
-            document.getElementById('nova-categoria-input').focus();
+        function atualizarSubcategorias() {
+            const catSelecionada = document.getElementById('categoria').value;
+            const selectSub = document.getElementById('subcategoria');
+            selectSub.innerHTML = '';
+            
+            const subcategorias = estruturaCategorias[tipoAtual][catSelecionada] || [];
+            subcategorias.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                selectSub.appendChild(opt);
+            });
         }
 
-        function fecharModalCategoria() {
-            document.getElementById('modal-categoria').classList.remove('flex');
-            document.getElementById('modal-categoria').classList.add('hidden');
-            document.getElementById('nova-categoria-input').value = '';
+        function abrirModalItem(tipo) {
+            tipoModalAtual = tipo;
+            const titulo = tipo === 'categoria' ? 'Nova Categoria' : 'Nova Subcategoria';
+            document.getElementById('modal-titulo').textContent = titulo;
+            document.getElementById('modal-item').classList.remove('hidden');
+            document.getElementById('modal-item').classList.add('flex');
+            document.getElementById('novo-item-input').focus();
         }
 
-        function salvarNovaCategoria() {
-            const novaCat = document.getElementById('nova-categoria-input').value.trim();
-            if (novaCat && !categoriasMap[tipoAtual].includes(novaCat)) {
-                categoriasMap[tipoAtual].push(novaCat);
-                localStorage.setItem('finance_categorias', JSON.stringify(categoriasMap));
-                atualizarCategorias();
-                document.getElementById('categoria').value = novaCat;
-                fecharModalCategoria();
-            } else {
-                alert('Nome inválido ou categoria já existente.');
+        function fecharModalItem() {
+            document.getElementById('modal-item').classList.remove('flex');
+            document.getElementById('modal-item').classList.add('hidden');
+            document.getElementById('novo-item-input').value = '';
+        }
+
+        function salvarNovoItem() {
+            const nome = document.getElementById('novo-item-input').value.trim();
+            if (!nome) {
+                alert('Digite um nome válido.');
+                return;
             }
+
+            if (tipoModalAtual === 'categoria') {
+                if (!estruturaCategorias[tipoAtual][nome]) {
+                    estruturaCategorias[tipoAtual][nome] = [];
+                    localStorage.setItem('finance_estrutura', JSON.stringify(estruturaCategorias));
+                    atualizarCategorias();
+                    document.getElementById('categoria').value = nome;
+                    atualizarSubcategorias();
+                } else {
+                    alert('Esta categoria já existe.');
+                }
+            } else {
+                const catSelecionada = document.getElementById('categoria').value;
+                if (!estruturaCategorias[tipoAtual][catSelecionada].includes(nome)) {
+                    estruturaCategorias[tipoAtual][catSelecionada].push(nome);
+                    localStorage.setItem('finance_estrutura', JSON.stringify(estruturaCategorias));
+                    atualizarSubcategorias();
+                    document.getElementById('subcategoria').value = nome;
+                } else {
+                    alert('Esta subcategoria já existe nesta categoria.');
+                }
+            }
+            fecharModalItem();
         }
 
         async function salvarTransacao(e) {
@@ -303,15 +383,18 @@
                 status: document.getElementById('status').value,
                 data: document.getElementById('data').value,
                 categoria: document.getElementById('categoria').value,
+                subcategoria: document.getElementById('subcategoria').value,
                 pagamento: document.getElementById('pagamento').value,
                 descricao: document.getElementById('descricao').value,
-                valor: parseFloat(document.getElementById('valor').value)
+                valor: valorNumericoReal
             };
 
             transacoes.push(nova);
             localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
             
-            document.getElementById('valor').value = '';
+            // Resetar formulário
+            document.getElementById('valor-input').value = '';
+            valorNumericoReal = 0;
             document.getElementById('descricao').value = '';
             document.getElementById('data').valueAsDate = new Date();
             atualizarDados();
@@ -326,7 +409,10 @@
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(nova)
+                        body: JSON.stringify({
+                            ...nova,
+                            categoria: `${nova.categoria} > ${nova.subcategoria}` // Compatibilidade com a planilha
+                        })
                     });
                     statusEl.textContent = "Salvo no Drive!";
                     setTimeout(() => statusEl.classList.add('hidden'), 3000);
@@ -363,7 +449,6 @@
             }
 
             transacoesFiltradas.forEach(t => {
-                // Apenas itens executados compõem o saldo real em caixa nos cards principais
                 if (t.status === 'Executado') {
                     if (t.tipo === 'Receita') totalReceitas += t.valor;
                     else totalDespesas += t.valor;
@@ -374,7 +459,7 @@
                 div.innerHTML = `
                     <div class="space-y-0.5">
                         <div class="flex items-center space-x-2">
-                            <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${t.categoria}</span>
+                            <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${t.categoria} (${t.subcategoria})</span>
                             <span class="text-[10px] px-1.5 py-0.5 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'} font-medium">${t.status}</span>
                             <span class="text-[10px] text-slate-400">• ${formatarData(t.data)}</span>
                         </div>
@@ -408,7 +493,6 @@
         }
 
         function atualizarGraficos(filtradas) {
-            // Considera itens executados ou todos para o gráfico (aqui focamos nos executados para assertividade)
             const executadas = filtradas.filter(t => t.status === 'Executado');
             const recTotal = executadas.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + t.valor, 0);
             const despTotal = executadas.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + t.valor, 0);
