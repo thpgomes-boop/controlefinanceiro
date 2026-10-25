@@ -48,7 +48,7 @@
     <!-- Main Container / Views -->
     <main class="max-w-md mx-auto p-4 space-y-4">
 
-        <!-- AB 1: NOVO LANÇAMENTO (Padrão inicial) -->
+        <!-- ABA 1: NOVO LANÇAMENTO -->
         <section id="view-lancamento" class="space-y-4">
             <div class="bg-white dark:bg-cardBg p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <h2 class="text-base font-bold mb-4 flex items-center space-x-2">
@@ -66,17 +66,30 @@
 
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data</label>
-                            <input type="date" id="data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Status</label>
+                            <select id="status" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                <option value="Executado">Executado</option>
+                                <option value="Planejado">Planejado</option>
+                            </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor (R$)</label>
-                            <input type="number" step="0.01" id="valor" placeholder="0,00" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data</label>
+                            <input type="date" id="data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Categoria</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor (R$)</label>
+                        <input type="number" step="0.01" id="valor" placeholder="0,00" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold uppercase text-slate-400">Categoria / Subcategoria</label>
+                            <button type="button" onclick="abrirModalCategoria()" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
+                                <i class="fa-solid fa-plus"></i> <span>Nova Categoria</span>
+                            </button>
+                        </div>
                         <select id="categoria" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                             <!-- Preenchido via JS -->
                         </select>
@@ -95,7 +108,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Subcategoria / Descrição</label>
+                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição Detalhada</label>
                         <input type="text" id="descricao" placeholder="Ex: Supermercado mensal, Combustível..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
                     </div>
 
@@ -109,17 +122,15 @@
 
         <!-- ABA 2: RESUMO E GRÁFICOS -->
         <section id="view-resumo" class="space-y-4 hidden">
-            <!-- Filtro de Mês -->
             <div class="bg-white dark:bg-cardBg p-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de Referência:</span>
                 <input type="month" id="filtro-mes" onchange="atualizarDados()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
             </div>
 
-            <!-- Cards de Saldo -->
             <div class="grid grid-cols-1 gap-3">
                 <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
                     <div>
-                        <p class="text-xs font-medium text-slate-400">Saldo no Mês</p>
+                        <p class="text-xs font-medium text-slate-400">Saldo no Mês (Executado)</p>
                         <h3 id="card-saldo" class="text-xl font-bold mt-0.5">R$ 0,00</h3>
                     </div>
                     <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl"><i class="fa-solid fa-scale-balanced"></i></div>
@@ -136,7 +147,6 @@
                 </div>
             </div>
 
-            <!-- Gráficos -->
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <h3 class="text-sm font-semibold mb-3">Balanço do Mês</h3>
                 <div class="relative h-48"><canvas id="barChart"></canvas></div>
@@ -162,6 +172,27 @@
 
     </main>
 
+    <!-- Modal Adicionar Categoria -->
+    <div id="modal-categoria" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-cardBg w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-bold text-sm">Nova Categoria / Subcategoria</h3>
+                <button onclick="fecharModalCategoria()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Adicionar na lista de:</label>
+                    <p id="label-tipo-cat" class="text-xs font-bold text-emerald-600 dark:text-emerald-400"></p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Nome da Categoria / Subcategoria</label>
+                    <input type="text" id="nova-categoria-input" placeholder="Ex: Investimento FIIs..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <button onclick="salvarNovaCategoria()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow transition">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Barra de Navegação Inferior (Abas) -->
     <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
         <div class="max-w-md mx-auto grid grid-cols-3 py-2">
@@ -182,9 +213,9 @@
 
     <!-- Script de Controle -->
     <script>
-        const APPS_SCRIPT_URL = "URL_DO_SEU_GOOGLE_APPS_SCRIPT"; // Sua URL do Google Sheets
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
 
-        const categoriasMap = {
+        let categoriasMap = JSON.parse(localStorage.getItem('finance_categorias')) || {
             Receita: ["Salário", "Freelance", "Investimentos", "Vendas / Extras", "Adicional Militar", "Outras Receitas"],
             Despesa: ["Moradia", "Alimentação", "Transporte", "Saúde", "Educação", "Assinaturas", "Lazer", "Compras", "Pensão Militar", "PNR", "FUSEX", "Empréstimo Consignado", "Outros"]
         };
@@ -238,11 +269,38 @@
             });
         }
 
+        function abrirModalCategoria() {
+            document.getElementById('label-tipo-cat.textContent = tipoAtual').textContent = `Categoria de ${tipoAtual}`;
+            document.getElementById('modal-categoria').classList.remove('hidden');
+            document.getElementById('modal-categoria').classList.add('flex');
+            document.getElementById('nova-categoria-input').focus();
+        }
+
+        function fecharModalCategoria() {
+            document.getElementById('modal-categoria').classList.remove('flex');
+            document.getElementById('modal-categoria').classList.add('hidden');
+            document.getElementById('nova-categoria-input').value = '';
+        }
+
+        function salvarNovaCategoria() {
+            const novaCat = document.getElementById('nova-categoria-input').value.trim();
+            if (novaCat && !categoriasMap[tipoAtual].includes(novaCat)) {
+                categoriasMap[tipoAtual].push(novaCat);
+                localStorage.setItem('finance_categorias', JSON.stringify(categoriasMap));
+                atualizarCategorias();
+                document.getElementById('categoria').value = novaCat;
+                fecharModalCategoria();
+            } else {
+                alert('Nome inválido ou categoria já existente.');
+            }
+        }
+
         async function salvarTransacao(e) {
             e.preventDefault();
             const nova = {
                 id: Date.now(),
                 tipo: tipoAtual,
+                status: document.getElementById('status').value,
                 data: document.getElementById('data').value,
                 categoria: document.getElementById('categoria').value,
                 pagamento: document.getElementById('pagamento').value,
@@ -253,14 +311,12 @@
             transacoes.push(nova);
             localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
             
-            // Resetar formulário mantendo data de hoje
             document.getElementById('valor').value = '';
             document.getElementById('descricao').value = '';
             document.getElementById('data').valueAsDate = new Date();
             atualizarDados();
 
-            // Feedback visual e sincronização com Drive
-            if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "URL_DO_SEU_GOOGLE_APPS_SCRIPT") {
+            if (APPS_SCRIPT_URL) {
                 const statusEl = document.getElementById('sync-status');
                 statusEl.textContent = "Sincronizando...";
                 statusEl.classList.remove('hidden');
@@ -280,7 +336,6 @@
                 }
             }
 
-            // Muda automaticamente para a aba de histórico para ver o lançamento realizado
             mudarAba('historico');
         }
 
@@ -308,8 +363,11 @@
             }
 
             transacoesFiltradas.forEach(t => {
-                if (t.tipo === 'Receita') totalReceitas += t.valor;
-                else totalDespesas += t.valor;
+                // Apenas itens executados compõem o saldo real em caixa nos cards principais
+                if (t.status === 'Executado') {
+                    if (t.tipo === 'Receita') totalReceitas += t.valor;
+                    else totalDespesas += t.valor;
+                }
 
                 const div = document.createElement('div');
                 div.className = "p-3.5 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
@@ -317,6 +375,7 @@
                     <div class="space-y-0.5">
                         <div class="flex items-center space-x-2">
                             <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${t.categoria}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'} font-medium">${t.status}</span>
                             <span class="text-[10px] text-slate-400">• ${formatarData(t.data)}</span>
                         </div>
                         <p class="text-xs text-slate-600 dark:text-slate-300">${t.descricao} <span class="text-[10px] text-slate-400">(${t.pagamento})</span></p>
@@ -349,8 +408,10 @@
         }
 
         function atualizarGraficos(filtradas) {
-            const recTotal = filtradas.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + t.valor, 0);
-            const despTotal = filtradas.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + t.valor, 0);
+            // Considera itens executados ou todos para o gráfico (aqui focamos nos executados para assertividade)
+            const executadas = filtradas.filter(t => t.status === 'Executado');
+            const recTotal = executadas.filter(t => t.tipo === 'Receita').reduce((acc, t) => acc + t.valor, 0);
+            const despTotal = executadas.filter(t => t.tipo === 'Despesa').reduce((acc, t) => acc + t.valor, 0);
 
             const ctxBar = document.getElementById('barChart').getContext('2d');
             if (barChartInstance) barChartInstance.destroy();
@@ -373,7 +434,7 @@
             });
 
             const despesasPorCat = {};
-            filtradas.filter(t => t.tipo === 'Despesa').forEach(t => {
+            executadas.filter(t => t.tipo === 'Despesa').forEach(t => {
                 despesasPorCat[t.categoria] = (despesasPorCat[t.categoria] || 0) + t.valor;
             });
 
