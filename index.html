@@ -71,7 +71,6 @@
                         </div>
                     </div>
 
-                    <!-- Bloco Categoria (Exec) -->
                     <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
                         <div class="flex justify-between items-center">
                             <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria</label>
@@ -82,7 +81,6 @@
                         <select id="exec-categoria" onchange="atualizarSubcategorias('exec')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
                     </div>
 
-                    <!-- Bloco Subcategoria (Exec) -->
                     <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
                         <div class="flex justify-between items-center">
                             <label class="block text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>
@@ -138,7 +136,6 @@
                         <input type="text" id="plan-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-amber-600 outline-none">
                     </div>
 
-                    <!-- Bloco Categoria (Plan) -->
                     <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
                         <div class="flex justify-between items-center">
                             <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria</label>
@@ -149,7 +146,6 @@
                         <select id="plan-categoria" onchange="atualizarSubcategorias('plan')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
                     </div>
 
-                    <!-- Bloco Subcategoria (Plan) -->
                     <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
                         <div class="flex justify-between items-center">
                             <label class="block text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>
@@ -502,11 +498,37 @@
             }
         }
 
+        // FUNÇÃO DE EXCLUIR ATUALIZADA (Apaga do LocalStorage e da Planilha)
         function excluirTransacao(id) {
-            if (confirm('Excluir lançamento?')) {
+            if (confirm('Deseja excluir este lançamento?')) {
+                const transacao = transacoes.find(t => t.id === id);
+
                 transacoes = transacoes.filter(t => t.id !== id);
                 localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
                 atualizarDados();
+
+                if (APPS_SCRIPT_URL && transacao) {
+                    const statusEl = document.getElementById('sync-status');
+                    statusEl.textContent = "A apagar da planilha...";
+                    statusEl.classList.remove('hidden');
+
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            acao: "excluir",
+                            id: transacao.id,
+                            data: transacao.data
+                        })
+                    }).then(() => {
+                        statusEl.textContent = "Apagado da planilha!";
+                        setTimeout(() => statusEl.classList.add('hidden'), 2000);
+                    }).catch(err => {
+                        statusEl.textContent = "Erro ao apagar";
+                        setTimeout(() => statusEl.classList.add('hidden'), 3000);
+                    });
+                }
             }
         }
 
