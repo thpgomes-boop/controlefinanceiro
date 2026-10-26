@@ -233,6 +233,7 @@
     </nav>
 
     <script>
+        // ATENÇÃO: Verifique se este é o seu URL correto do Apps Script
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
 
         let estruturaCategorias = JSON.parse(localStorage.getItem('finance_estrutura')) || {
@@ -425,25 +426,25 @@
             mudarAba('historico');
         }
 
-        // Função para alternar o status e atualizar o valor
+        // Função para alternar o status, atualizar valor e gerir saldo restante (Envelopes)
         function alternarStatus(id) {
             const index = transacoes.findIndex(t => t.id === id);
             if (index > -1) {
                 const transacao = transacoes[index];
                 let novoStatus = transacao.status === 'Planejado' ? 'Executado' : 'Planejado';
                 let novoValor = transacao.valor;
+                let valorOriginal = transacao.valor;
+                
+                let criarRestante = false;
+                let valorRestante = 0;
 
-                // Se estiver mudando para Executado, pede a confirmação do valor
+                // Se estiver a mudar para Executado, pede a confirmação do valor
                 if (novoStatus === 'Executado') {
                     let valorSugerido = transacao.valor.toFixed(2).replace('.', ',');
-                    let inputValor = window.prompt(`Confirme o valor final pago para:\n${transacao.descricao}`, valorSugerido);
+                    let inputValor = window.prompt(`Confirme o valor pago para:\n${transacao.descricao}`, valorSugerido);
                     
-                    // Se o usuário clicar em "Cancelar"
-                    if (inputValor === null) {
-                        return; 
-                    }
+                    if (inputValor === null) return; // Cancelou
                     
-                    // Converte o que foi digitado (ex: 1.500,00 ou 1500,00) para número que o sistema entende
                     inputValor = inputValor.replace(/\./g, '').replace(',', '.');
                     let valorParseado = parseFloat(inputValor);
                     
@@ -451,21 +452,47 @@
                         alert("Valor inválido. Ação cancelada.");
                         return;
                     }
+                    
                     novoValor = valorParseado;
+
+                    // Lógica do Sistema de Envelopes (Gastou menos do que o planeado)
+                    if (novoValor < valorOriginal) {
+                        valorRestante = valorOriginal - novoValor;
+                        let formatado = valorRestante.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                        criarRestante = window.confirm(`Gastou menos que o planeado.\nDeseja manter o saldo de ${formatado} como "Planeado" para o resto do mês?`);
+                    }
                 }
 
-                // Atualiza o objeto
+                // Atualiza o lançamento atual
                 transacoes[index].status = novoStatus;
                 transacoes[index].valor = novoValor;
                 
+                // Cria o lançamento do saldo restante (se o utilizador aceitou)
+                let novaTransacaoRestante = null;
+                if (criarRestante) {
+                    novaTransacaoRestante = {
+                        id: Date.now() + 1, // ID único para não sobrepor
+                        tipo: transacao.tipo,
+                        status: 'Planejado',
+                        data: transacao.data,
+                        categoria: transacao.categoria,
+                        subcategoria: transacao.subcategoria,
+                        pagamento: transacao.pagamento,
+                        descricao: transacao.descricao + " (Saldo Restante)",
+                        valor: valorRestante
+                    };
+                    transacoes.push(novaTransacaoRestante);
+                }
+
                 localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-                atualizarDados(); // Atualiza a tela
+                atualizarDados(); // Atualiza o ecrã imediatamente
 
                 if (APPS_SCRIPT_URL) {
                     const statusEl = document.getElementById('sync-status');
-                    statusEl.textContent = "A atualizar status...";
+                    statusEl.textContent = "A atualizar folha...";
                     statusEl.classList.remove('hidden');
 
+                    // 1. Envia a atualização do lançamento original
                     fetch(APPS_SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
@@ -478,7 +505,16 @@
                             valor: novoValor
                         })
                     }).then(() => {
-                        statusEl.textContent = "Status e valor atualizados!";
+                        // 2. Se houver saldo restante, envia como um NOVO lançamento
+                        if (criarRestante && novaTransacaoRestante) {
+                            fetch(APPS_SCRIPT_URL, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(novaTransacaoRestante)
+                            });
+                        }
+                        statusEl.textContent = "Sincronizado!";
                         setTimeout(() => statusEl.classList.add('hidden'), 3000);
                     }).catch(err => {
                         statusEl.textContent = "Erro na sincronização";
@@ -520,7 +556,7 @@
                 // Botão dinâmico baseado no status
                 const btnStatus = t.status === 'Planejado'
                     ? `<button onclick="alternarStatus(${t.id})" class="text-emerald-500 hover:text-emerald-600 transition p-1 mr-1" title="Marcar como Executado"><i class="fa-solid fa-check-circle text-base"></i></button>`
-                    : `<button onclick="alternarStatus(${t.id})" class="text-amber-500 hover:text-amber-600 transition p-1 mr-1" title="Reverter para Planejado"><i class="fa-solid fa-clock-rotate-left text-base"></i></button>`;
+                    : `<button onclick="alternarStatus(${t.id})" class="text-amber-500 hover:text-amber-600 transition p-1 mr-1" title="Reverter para Planeado"><i class="fa-solid fa-clock-rotate-left text-base"></i></button>`;
 
                 div.innerHTML = `
                     <div class="space-y-0.5">
