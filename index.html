@@ -498,7 +498,6 @@
             }
         }
 
-        // FUNÇÃO DE EXCLUIR ATUALIZADA (Apaga do LocalStorage e da Planilha)
         function excluirTransacao(id) {
             if (confirm('Deseja excluir este lançamento?')) {
                 const transacao = transacoes.find(t => t.id === id);
@@ -519,7 +518,9 @@
                         body: JSON.stringify({
                             acao: "excluir",
                             id: transacao.id,
-                            data: transacao.data
+                            data: transacao.data,
+                            descricao: transacao.descricao,
+                            valor: transacao.valor
                         })
                     }).then(() => {
                         statusEl.textContent = "Apagado da planilha!";
@@ -592,7 +593,16 @@
             atualizarGraficosConcentricos(filtradasMes);
         }
 
-        function formatarData(iso) { const [a, m, d] = iso.split('-'); return `${d}/${m}`; }
+        // CORREÇÃO DA DATA: Extrai apenas os 10 primeiros caracteres (YYYY-MM-DD) de forma segura
+        function formatarData(iso) {
+            if (!iso) return '';
+            let limpo = String(iso).slice(0, 10);
+            const partes = limpo.split('-');
+            if (partes.length === 3) {
+                return `${partes[2]}/${partes[1]}`;
+            }
+            return iso;
+        }
 
         function atualizarGraficosConcentricos(f) {
             const re = f.filter(t => t.tipo === 'Receita' && t.status === 'Executado').reduce((a,b)=>a+b.valor,0);
