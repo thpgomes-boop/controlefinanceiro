@@ -12,6 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="Finanças">
     <link rel="apple-touch-icon" href="icon-192.png">
 
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -27,7 +28,9 @@
             }
         }
     </script>
+    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen pb-20 transition-colors duration-300">
@@ -422,12 +425,39 @@
             mudarAba('historico');
         }
 
-        // Função para alternar o status (Planejado <-> Executado)
+        // Função para alternar o status e atualizar o valor
         function alternarStatus(id) {
             const index = transacoes.findIndex(t => t.id === id);
             if (index > -1) {
-                const novoStatus = transacoes[index].status === 'Planejado' ? 'Executado' : 'Planejado';
+                const transacao = transacoes[index];
+                let novoStatus = transacao.status === 'Planejado' ? 'Executado' : 'Planejado';
+                let novoValor = transacao.valor;
+
+                // Se estiver mudando para Executado, pede a confirmação do valor
+                if (novoStatus === 'Executado') {
+                    let valorSugerido = transacao.valor.toFixed(2).replace('.', ',');
+                    let inputValor = window.prompt(`Confirme o valor final pago para:\n${transacao.descricao}`, valorSugerido);
+                    
+                    // Se o usuário clicar em "Cancelar"
+                    if (inputValor === null) {
+                        return; 
+                    }
+                    
+                    // Converte o que foi digitado (ex: 1.500,00 ou 1500,00) para número que o sistema entende
+                    inputValor = inputValor.replace(/\./g, '').replace(',', '.');
+                    let valorParseado = parseFloat(inputValor);
+                    
+                    if (isNaN(valorParseado) || valorParseado <= 0) {
+                        alert("Valor inválido. Ação cancelada.");
+                        return;
+                    }
+                    novoValor = valorParseado;
+                }
+
+                // Atualiza o objeto
                 transacoes[index].status = novoStatus;
+                transacoes[index].valor = novoValor;
+                
                 localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
                 atualizarDados(); // Atualiza a tela
 
@@ -442,12 +472,13 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             acao: "atualizar_status",
-                            id: transacoes[index].id,
-                            data: transacoes[index].data,
-                            status: novoStatus
+                            id: transacao.id,
+                            data: transacao.data,
+                            status: novoStatus,
+                            valor: novoValor
                         })
                     }).then(() => {
-                        statusEl.textContent = "Status atualizado!";
+                        statusEl.textContent = "Status e valor atualizados!";
                         setTimeout(() => statusEl.classList.add('hidden'), 3000);
                     }).catch(err => {
                         statusEl.textContent = "Erro na sincronização";
@@ -611,6 +642,7 @@
         }
     </script>
     
+    <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
