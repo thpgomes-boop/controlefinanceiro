@@ -59,6 +59,7 @@
                         <button type="button" id="btn-exec-Despesa" onclick="setTipo('Despesa', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm">Despesa</button>
                         <button type="button" id="btn-exec-Receita" onclick="setTipo('Receita', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200">Receita</button>
                     </div>
+                    
                     <div class="flex space-x-2">
                         <div class="w-1/2">
                             <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Data</label>
@@ -69,11 +70,31 @@
                             <input type="text" id="exec-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-base font-bold text-emerald-600 outline-none">
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="exec-categoria" onchange="atualizarSubcategorias('exec')" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] outline-none"></select>
-                        <select id="exec-subcategoria" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] outline-none"></select>
+
+                    <!-- Bloco Categoria (Exec) -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria</label>
+                            <button type="button" onclick="abrirModalItem('categoria', 'exec')" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                                <i class="fa-solid fa-plus-circle"></i> Nova Categoria
+                            </button>
+                        </div>
+                        <select id="exec-categoria" onchange="atualizarSubcategorias('exec')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
                     </div>
+
+                    <!-- Bloco Subcategoria (Exec) -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>
+                            <button type="button" onclick="abrirModalItem('subcategoria', 'exec')" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
+                                <i class="fa-solid fa-plus-circle"></i> Nova Subcategoria
+                            </button>
+                        </div>
+                        <select id="exec-subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
+                    </div>
+
                     <input type="text" id="exec-descricao" placeholder="Descrição rápida..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none">
+                    
                     <div class="flex justify-between items-center space-x-2">
                         <select id="exec-pagamento" class="w-1/2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs outline-none">
                             <option value="Pix">Pix</option><option value="Cartão de Crédito">Crédito</option><option value="Cartão de Débito">Débito</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option>
@@ -116,10 +137,29 @@
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor Previsto (R$)</label>
                         <input type="text" id="plan-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-amber-600 outline-none">
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="plan-categoria" onchange="atualizarSubcategorias('plan')" class="bg-white dark:bg-slate-800 border rounded-lg p-2 text-sm outline-none"></select>
-                        <select id="plan-subcategoria" class="bg-white dark:bg-slate-800 border rounded-lg p-2 text-sm outline-none"></select>
+
+                    <!-- Bloco Categoria (Plan) -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria</label>
+                            <button type="button" onclick="abrirModalItem('categoria', 'plan')" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold hover:underline">
+                                <i class="fa-solid fa-plus-circle"></i> Nova Categoria
+                            </button>
+                        </div>
+                        <select id="plan-categoria" onchange="atualizarSubcategorias('plan')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
                     </div>
+
+                    <!-- Bloco Subcategoria (Plan) -->
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>
+                            <button type="button" onclick="abrirModalItem('subcategoria', 'plan')" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold hover:underline">
+                                <i class="fa-solid fa-plus-circle"></i> Nova Subcategoria
+                            </button>
+                        </div>
+                        <select id="plan-subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
+                    </div>
+
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Forma de Pagamento</label>
                         <select id="plan-pagamento" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
@@ -245,23 +285,19 @@
 
             atualizarCategorias('exec');
             atualizarCategorias('plan');
-            
-            // Puxa os dados da planilha automaticamente ao abrir
             carregarDadosDaPlanilha();
         });
 
-        // Converte YYYY-MM para o nome da aba da planilha (ex: "2026-11" -> "Nov 2026")
         function obterNomeAbaPorIso(anoMesIso) {
             const [ano, mes] = anoMesIso.split('-');
             const meses = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
             return `${meses[mes] || "Nov"} ${ano}`;
         }
 
-        // FUNÇÃO DE PUXAR DADOS DA PLANILHA DO GOOGLE SHEETS
         async function carregarDadosDaPlanilha() {
             if (!APPS_SCRIPT_URL) return;
-            const mesFiltroIso = document.getElementById('filtro-mes').value; // Ex: 2026-11
-            const nomeAba = obterNomeAbaPorIso(mesFiltroIso); // Ex: "Nov 2026"
+            const mesFiltroIso = document.getElementById('filtro-mes').value;
+            const nomeAba = obterNomeAbaPorIso(mesFiltroIso);
 
             const statusEl = document.getElementById('sync-status');
             statusEl.textContent = "A puxar dados da planilha...";
@@ -272,17 +308,12 @@
                 const dadosPlanilha = await response.json();
 
                 if (Array.isArray(dadosPlanilha)) {
-                    // Mescla os dados da planilha com os locais, evitando duplicados por ID
-                    let idsLocais = new Set(transacoes.map(t => String(t.id)));
-                    
                     dadosPlanilha.forEach(itemDaPlanilha => {
                         let idx = transacoes.findIndex(t => String(t.id) === String(itemDaPlanilha.id) || (t.descricao === itemDaPlanilha.descricao && t.data === itemDaPlanilha.data && t.valor === itemDaPlanilha.valor));
                         if (idx > -1) {
-                            // Atualiza com o status real da planilha
                             transacoes[idx].status = itemDaPlanilha.status;
                             transacoes[idx].valor = itemDaPlanilha.valor;
                         } else {
-                            // Adiciona se não existir localmente
                             transacoes.push(itemDaPlanilha);
                         }
                     });
@@ -296,7 +327,7 @@
                 console.error("Erro ao puxar dados:", err);
                 statusEl.textContent = "Erro ao carregar dados";
                 setTimeout(() => statusEl.classList.add('hidden'), 3000);
-                atualizarDados(); // Mostra o que tem no cache local se falhar
+                atualizarDados();
             }
         }
 
@@ -482,7 +513,6 @@
         function atualizarDados() {
             const mesFiltro = document.getElementById('filtro-mes').value;
             
-            // Pendentes gerais
             const pendentes = transacoes.filter(t => t.status === 'Planejado').sort((a, b) => new Date(a.data) - new Date(b.data));
             const listaPendentes = document.getElementById('lista-pendentes');
             listaPendentes.innerHTML = pendentes.length === 0 ? `<div class="p-4 text-center text-xs text-slate-400">Tudo em dia! Sem pendências.</div>` : '';
@@ -501,7 +531,6 @@
                     </div>`;
             });
 
-            // Filtrados por Mês
             const filtradasMes = transacoes.filter(t => t.data.startsWith(mesFiltro)).sort((a, b) => new Date(b.data) - new Date(a.data));
             let tRec = 0, tDesp = 0;
             const listaCons = document.getElementById('lista-transacoes');
