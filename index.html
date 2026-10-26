@@ -12,7 +12,6 @@
     <meta name="apple-mobile-web-app-title" content="Finanças">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,9 +27,7 @@
             }
         }
     </script>
-    <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen pb-20 transition-colors duration-300">
@@ -282,7 +279,7 @@
             let apenasNumeros = input.value.replace(/\D/g, '');
             if (!apenasNumeros) apenasNumeros = '0';
             valorNumericoReal = parseFloat(apenasNumeros) / 100;
-            input.value = valorNumericoReal.toLocaleString('pt-PT', { style: 'currency', currency: 'BRL' });
+            input.value = valorNumericoReal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function mudarAba(aba) {
@@ -405,7 +402,7 @@
 
             if (APPS_SCRIPT_URL) {
                 const statusEl = document.getElementById('sync-status');
-                statusEl.textContent = "A sincronizar com a aba do mês...";
+                statusEl.textContent = "A sincronizar com a folha...";
                 statusEl.classList.remove('hidden');
 
                 try {
@@ -423,6 +420,40 @@
                 }
             }
             mudarAba('historico');
+        }
+
+        // Função para alternar o status (Planejado <-> Executado)
+        function alternarStatus(id) {
+            const index = transacoes.findIndex(t => t.id === id);
+            if (index > -1) {
+                const novoStatus = transacoes[index].status === 'Planejado' ? 'Executado' : 'Planejado';
+                transacoes[index].status = novoStatus;
+                localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
+                atualizarDados(); // Atualiza a tela
+
+                if (APPS_SCRIPT_URL) {
+                    const statusEl = document.getElementById('sync-status');
+                    statusEl.textContent = "A atualizar status...";
+                    statusEl.classList.remove('hidden');
+
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            acao: "atualizar_status",
+                            id: transacoes[index].id,
+                            data: transacoes[index].data,
+                            status: novoStatus
+                        })
+                    }).then(() => {
+                        statusEl.textContent = "Status atualizado!";
+                        setTimeout(() => statusEl.classList.add('hidden'), 3000);
+                    }).catch(err => {
+                        statusEl.textContent = "Erro na sincronização";
+                    });
+                }
+            }
         }
 
         function excluirTransacao(id) {
@@ -454,22 +485,31 @@
 
                 const div = document.createElement('div');
                 div.className = "p-3.5 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 transition";
+                
+                // Botão dinâmico baseado no status
+                const btnStatus = t.status === 'Planejado'
+                    ? `<button onclick="alternarStatus(${t.id})" class="text-emerald-500 hover:text-emerald-600 transition p-1 mr-1" title="Marcar como Executado"><i class="fa-solid fa-check-circle text-base"></i></button>`
+                    : `<button onclick="alternarStatus(${t.id})" class="text-amber-500 hover:text-amber-600 transition p-1 mr-1" title="Reverter para Planejado"><i class="fa-solid fa-clock-rotate-left text-base"></i></button>`;
+
                 div.innerHTML = `
                     <div class="space-y-0.5">
                         <div class="flex items-center space-x-2">
                             <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${t.categoria} (${t.subcategoria})</span>
-                            <span class="text-[10px] px-1.5 py-0.5 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'} font-medium">${t.status}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded cursor-pointer ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'} font-medium" onclick="alternarStatus(${t.id})">${t.status}</span>
                             <span class="text-[10px] text-slate-400">• ${formatarData(t.data)}</span>
                         </div>
                         <p class="text-xs text-slate-600 dark:text-slate-300">${t.descricao} <span class="text-[10px] text-slate-400">(${t.pagamento})</span></p>
                     </div>
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2">
                         <span class="text-sm font-bold ${t.tipo === 'Receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'}">
                             ${t.tipo === 'Receita' ? '+' : '-'} R$ ${t.valor.toFixed(2).replace('.', ',')}
                         </span>
-                        <button onclick="excluirTransacao(${t.id})" class="text-slate-300 hover:text-rose-500 transition p-1">
-                            <i class="fa-solid fa-trash-can text-xs"></i>
-                        </button>
+                        <div class="flex items-center border-l border-slate-200 dark:border-slate-700 pl-2 ml-2">
+                            ${btnStatus}
+                            <button onclick="excluirTransacao(${t.id})" class="text-slate-300 hover:text-rose-500 transition p-1">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
                 listaEl.appendChild(div);
@@ -571,7 +611,6 @@
         }
     </script>
     
-    <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
