@@ -4,23 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finanças Família</title>
-    
-    <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Finanças">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
-                extend: {
-                    colors: { primary: '#10b981', darkBg: '#0f172a', cardBg: '#1e293b' }
-                }
+                extend: { colors: { primary: '#10b981', darkBg: '#0f172a', cardBg: '#1e293b' } }
             }
         }
     </script>
@@ -40,20 +35,21 @@
                     <span id="sync-status" class="text-[10px] text-amber-500 font-medium hidden">A sincronizar...</span>
                 </div>
             </div>
-            <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
-            </button>
+            <div class="flex items-center space-x-2">
+                <button onclick="carregarDadosDaPlanilha()" class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 transition" title="Puxar dados da planilha">
+                    <i class="fa-solid fa-cloud-arrow-down text-sm"></i>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">
+                    <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
+                </button>
+            </div>
         </div>
     </header>
 
     <main class="max-w-md mx-auto p-4 space-y-4">
         
-        <!-- ==========================================
-             ABA 1: EXECUTAR (GASTOS E PENDÊNCIAS) 
-             ========================================== -->
+        <!-- ABA 1: EXECUTAR -->
         <section id="view-executar" class="space-y-4">
-            
-            <!-- 1. GASTO RÁPIDO (AVULSO) -->
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <h2 class="text-sm font-bold mb-3 flex items-center space-x-2 text-emerald-600 dark:text-emerald-400">
                     <i class="fa-solid fa-bolt"></i><span>Gasto Rápido / Avulso</span>
@@ -61,34 +57,26 @@
                 <form onsubmit="salvarTransacao(event, 'exec')" class="space-y-3">
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" id="btn-exec-Despesa" onclick="setTipo('Despesa', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm">Despesa</button>
-                        <button type="button" id="btn-exec-Receita" onclick="setTipo('Receita', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700">Receita</button>
+                        <button type="button" id="btn-exec-Receita" onclick="setTipo('Receita', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200">Receita</button>
                     </div>
-
                     <div class="flex space-x-2">
                         <div class="w-1/2">
                             <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Data</label>
-                            <input type="date" id="exec-data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <input type="date" id="exec-data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none">
                         </div>
                         <div class="w-1/2">
                             <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Valor</label>
                             <input type="text" id="exec-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-base font-bold text-emerald-600 outline-none">
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-2">
-                        <select id="exec-categoria" onchange="atualizarSubcategorias('exec')" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] focus:ring-2 outline-none"></select>
-                        <select id="exec-subcategoria" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] focus:ring-2 outline-none"></select>
+                        <select id="exec-categoria" onchange="atualizarSubcategorias('exec')" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] outline-none"></select>
+                        <select id="exec-subcategoria" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-[11px] outline-none"></select>
                     </div>
-
                     <input type="text" id="exec-descricao" placeholder="Descrição rápida..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none">
-                    
                     <div class="flex justify-between items-center space-x-2">
                         <select id="exec-pagamento" class="w-1/2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs outline-none">
-                            <option value="Pix">Pix</option>
-                            <option value="Cartão de Crédito">Crédito</option>
-                            <option value="Cartão de Débito">Débito</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="Boleto">Boleto</option>
+                            <option value="Pix">Pix</option><option value="Cartão de Crédito">Crédito</option><option value="Cartão de Débito">Débito</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option>
                         </select>
                         <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
                             <i class="fa-solid fa-check"></i><span>Lançar</span>
@@ -97,71 +85,51 @@
                 </form>
             </div>
 
-            <!-- 2. CONTAS PENDENTES (O que foi planeado) -->
             <div class="bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div class="p-3 border-b border-slate-200 dark:border-slate-700 bg-amber-50 dark:bg-amber-900/20">
+                <div class="p-3 border-b border-slate-200 dark:border-slate-700 bg-amber-50 dark:bg-amber-900/20 flex justify-between items-center">
                     <h3 class="text-xs font-bold text-amber-600 dark:text-amber-500 flex items-center space-x-2">
                         <i class="fa-solid fa-clock"></i><span>Pendentes / Envelopes</span>
                     </h3>
+                    <button onclick="carregarDadosDaPlanilha()" class="text-[10px] bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded font-semibold text-amber-900 dark:text-amber-100">Atualizar</button>
                 </div>
-                <div id="lista-pendentes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto">
-                    <!-- Preenchido via JS -->
-                </div>
+                <div id="lista-pendentes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto"></div>
             </div>
         </section>
 
-        <!-- ==========================================
-             ABA 2: PLANEJAR (ORÇAMENTO E BOLETOS) 
-             ========================================== -->
+        <!-- ABA 2: PLANEJAR -->
         <section id="view-planejar" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 border-l-4 border-l-amber-500">
                 <h2 class="text-base font-bold mb-1 flex items-center space-x-2">
                     <i class="fa-solid fa-calendar-plus text-amber-500"></i><span>Novo Planeamento</span>
                 </h2>
-                <p class="text-[11px] text-slate-400 mb-4">Lançamentos criados aqui ficarão como "Pendentes" na aba Executar.</p>
-                
+                <p class="text-[11px] text-slate-400 mb-4">Lançamentos criados aqui ficarão como "Pendentes".</p>
                 <form onsubmit="salvarTransacao(event, 'plan')" class="space-y-4">
                     <div class="grid grid-cols-2 gap-2">
                         <button type="button" id="btn-plan-Despesa" onclick="setTipo('Despesa', 'plan')" class="py-2.5 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm">Despesa</button>
-                        <button type="button" id="btn-plan-Receita" onclick="setTipo('Receita', 'plan')" class="py-2.5 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700">Receita</button>
+                        <button type="button" id="btn-plan-Receita" onclick="setTipo('Receita', 'plan')" class="py-2.5 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200">Receita</button>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data Prevista</label>
-                        <input type="date" id="plan-data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm focus:ring-2 outline-none">
+                        <input type="date" id="plan-data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor Previsto (R$)</label>
                         <input type="text" id="plan-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-amber-600 outline-none">
                     </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria / Envelope</label>
-                            <button type="button" onclick="abrirModalItem('categoria', 'plan')" class="text-[10px] text-amber-600 font-semibold hover:underline"><i class="fa-solid fa-plus"></i> Nova</button>
-                        </div>
-                        <select id="plan-categoria" onchange="atualizarSubcategorias('plan')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm outline-none"></select>
-                        <select id="plan-subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm outline-none"></select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="plan-categoria" onchange="atualizarSubcategorias('plan')" class="bg-white dark:bg-slate-800 border rounded-lg p-2 text-sm outline-none"></select>
+                        <select id="plan-subcategoria" class="bg-white dark:bg-slate-800 border rounded-lg p-2 text-sm outline-none"></select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Forma de Pagamento</label>
                         <select id="plan-pagamento" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
-                            <option value="Pix">Pix</option>
-                            <option value="Cartão de Crédito">Cartão de Crédito</option>
-                            <option value="Cartão de Débito">Cartão de Débito</option>
-                            <option value="Dinheiro">Dinheiro</option>
-                            <option value="Boleto">Boleto</option>
-                            <option value="Desconto em Folha">Desconto em Folha</option>
+                            <option value="Pix">Pix</option><option value="Cartão de Crédito">Cartão de Crédito</option><option value="Cartão de Débito">Cartão de Débito</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option><option value="Desconto em Folha">Desconto em Folha</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição</label>
                         <input type="text" id="plan-descricao" placeholder="Ex: Aluguel da casa..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
                     </div>
-
                     <button type="submit" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
                         <i class="fa-solid fa-calendar-check"></i><span>Agendar / Planejar</span>
                     </button>
@@ -169,39 +137,33 @@
             </div>
         </section>
 
-        <!-- ==========================================
-             ABA 3: PAINEL / DASHBOARD
-             ========================================== -->
+        <!-- ABA 3: PAINEL -->
         <section id="view-dashboard" class="space-y-4 hidden">
-            <!-- Filtro Mês Global -->
             <div class="bg-white dark:bg-cardBg p-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de Referência:</span>
-                <input type="month" id="filtro-mes" onchange="atualizarDados()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none">
+                <input type="month" id="filtro-mes" onchange="carregarDadosDaPlanilha()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium outline-none">
             </div>
-
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <div>
                     <p class="text-xs font-medium text-slate-400">Saldo no Mês (Executado)</p>
                     <h3 id="card-saldo" class="text-xl font-bold mt-0.5">R$ 0,00</h3>
                 </div>
-                <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 rounded-xl"><i class="fa-solid fa-scale-balanced"></i></div>
             </div>
-            
             <div class="grid grid-cols-2 gap-3">
                 <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                     <p class="text-[11px] font-medium text-slate-400">Receitas</p>
-                    <h3 id="card-receitas" class="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">R$ 0,00</h3>
+                    <h3 id="card-receitas" class="text-base font-bold text-emerald-600 mt-0.5">R$ 0,00</h3>
                 </div>
                 <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                     <p class="text-[11px] font-medium text-slate-400">Despesas</p>
-                    <h3 id="card-despesas" class="text-base font-bold text-rose-600 dark:text-rose-400 mt-0.5">R$ 0,00</h3>
+                    <h3 id="card-despesas" class="text-base font-bold text-rose-600 mt-0.5">R$ 0,00</h3>
                 </div>
             </div>
-
             <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-semibold">Análise de Cenários</h3>
-                    <span id="badge-cenario" class="text-[10px] px-2 py-0.5 rounded-full font-bold">--</span>
+                    <span id="badge-cenario" class="text-[10px] px-2 rounded-full font-bold">--</span>
                 </div>
                 <div class="relative h-56 flex justify-center"><canvas id="concentricChart"></canvas></div>
             </div>
@@ -211,13 +173,11 @@
             </div>
         </section>
 
-        <!-- ==========================================
-             ABA 4: CONSULTAS (HISTÓRICO)
-             ========================================== -->
+        <!-- ABA 4: CONSULTAS -->
         <section id="view-consultas" class="space-y-4 hidden">
             <div class="bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <h3 class="text-sm font-semibold">Todos os Lançamentos</h3>
+                    <h3 class="text-sm font-semibold">Lançamentos do Mês</h3>
                     <span id="total-registros" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 reg.</span>
                 </div>
                 <div id="lista-transacoes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[65vh] overflow-y-auto"></div>
@@ -225,38 +185,34 @@
         </section>
     </main>
 
-    <!-- Modais -->
+    <!-- Modal -->
     <div id="modal-item" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-cardBg w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <h3 id="modal-titulo" class="font-bold text-sm">Adicionar</h3>
-                <button onclick="fecharModalItem()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="fecharModalItem()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-4 space-y-3">
-                <input type="text" id="novo-item-input" placeholder="Digite o nome..." class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-                <button onclick="salvarNovoItem()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm transition">Adicionar</button>
+                <input type="text" id="novo-item-input" placeholder="Digite o nome..." class="w-full bg-slate-50 dark:bg-slate-800 border rounded-xl p-2.5 text-sm outline-none">
+                <button onclick="salvarNovoItem()" class="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-xl text-sm transition">Adicionar</button>
             </div>
         </div>
     </div>
 
-    <!-- NAVEGAÇÃO INFERIOR -->
+    <!-- NAVEGAÇÃO -->
     <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
         <div class="max-w-md mx-auto grid grid-cols-4 py-2">
-            <button onclick="mudarAba('executar')" id="tab-btn-executar" class="flex flex-col items-center justify-center space-y-1 text-emerald-600 transition">
-                <i class="fa-solid fa-bolt text-base"></i>
-                <span class="text-[10px] font-bold">Executar</span>
+            <button onclick="mudarAba('executar')" id="tab-btn-executar" class="flex flex-col items-center justify-center space-y-1 text-emerald-600 font-bold transition">
+                <i class="fa-solid fa-bolt text-base"></i><span class="text-[10px]">Executar</span>
             </button>
-            <button onclick="mudarAba('planejar')" id="tab-btn-planejar" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                <i class="fa-solid fa-calendar-plus text-base"></i>
-                <span class="text-[10px] font-medium">Planejar</span>
+            <button onclick="mudarAba('planejar')" id="tab-btn-planejar" class="flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
+                <i class="fa-solid fa-calendar-plus text-base"></i><span class="text-[10px]">Planejar</span>
             </button>
-            <button onclick="mudarAba('dashboard')" id="tab-btn-dashboard" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                <i class="fa-solid fa-chart-pie text-base"></i>
-                <span class="text-[10px] font-medium">Painel</span>
+            <button onclick="mudarAba('dashboard')" id="tab-btn-dashboard" class="flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
+                <i class="fa-solid fa-chart-pie text-base"></i><span class="text-[10px]">Painel</span>
             </button>
-            <button onclick="mudarAba('consultas')" id="tab-btn-consultas" class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
-                <i class="fa-solid fa-list-ul text-base"></i>
-                <span class="text-[10px] font-medium">Consultas</span>
+            <button onclick="mudarAba('consultas')" id="tab-btn-consultas" class="flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
+                <i class="fa-solid fa-list-ul text-base"></i><span class="text-[10px]">Consultas</span>
             </button>
         </div>
     </nav>
@@ -275,8 +231,6 @@
         };
 
         let transacoes = JSON.parse(localStorage.getItem('finance_transacoes')) || [];
-        
-        // Estado dos tipos por formulário
         let tipoEstado = { exec: 'Despesa', plan: 'Despesa' };
         let contextoModal = { prefixo: 'exec', tipo: 'categoria' }; 
         let concentricChartInstance = null;
@@ -285,312 +239,39 @@
         document.addEventListener('DOMContentLoaded', () => {
             const hoje = new Date();
             const mesAtual = hoje.toISOString().slice(0, 7);
-            const hojeIso = hoje.toISOString().slice(0, 10);
-            
-            // Próximo mês para aba planejar
-            const proxMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
-
             document.getElementById('filtro-mes').value = mesAtual;
-            document.getElementById('exec-data').value = hojeIso; // Gasto rápido = hoje
-            document.getElementById('plan-data').value = proxMes.toISOString().slice(0, 10); // Plan = prox mês
+            document.getElementById('exec-data').value = hoje.toISOString().slice(0, 10);
+            document.getElementById('plan-data').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1).toISOString().slice(0, 10);
 
             atualizarCategorias('exec');
             atualizarCategorias('plan');
-            atualizarDados();
+            
+            // Puxa os dados da planilha automaticamente ao abrir
+            carregarDadosDaPlanilha();
         });
 
-        // Formata apenas o visual do input, sem usar variáveis globais
-        function formatarMoeda(input) {
-            let apenasNumeros = input.value.replace(/\D/g, '');
-            if (!apenasNumeros) apenasNumeros = '0';
-            let valorFloat = parseFloat(apenasNumeros) / 100;
-            input.value = valorFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        // Converte YYYY-MM para o nome da aba da planilha (ex: "2026-11" -> "Nov 2026")
+        function obterNomeAbaPorIso(anoMesIso) {
+            const [ano, mes] = anoMesIso.split('-');
+            const meses = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
+            return `${meses[mes] || "Nov"} ${ano}`;
         }
 
-        // Lê o valor float real do input
-        function lerValorDoInput(inputId) {
-            let val = document.getElementById(inputId).value.replace(/\D/g, '');
-            return parseFloat(val) / 100;
-        }
+        // FUNÇÃO DE PUXAR DADOS DA PLANILHA DO GOOGLE SHEETS
+        async function carregarDadosDaPlanilha() {
+            if (!APPS_SCRIPT_URL) return;
+            const mesFiltroIso = document.getElementById('filtro-mes').value; // Ex: 2026-11
+            const nomeAba = obterNomeAbaPorIso(mesFiltroIso); // Ex: "Nov 2026"
 
-        function mudarAba(aba) {
-            ['executar', 'planejar', 'dashboard', 'consultas'].forEach(a => {
-                document.getElementById(`view-${a}`).classList.add('hidden');
-                document.getElementById(`tab-btn-${a}`).classList.remove('text-emerald-600', 'font-bold');
-                document.getElementById(`tab-btn-${a}`).classList.add('text-slate-400', 'font-medium');
-            });
-            document.getElementById(`view-${aba}`).classList.remove('hidden');
-            document.getElementById(`tab-btn-${aba}`).classList.remove('text-slate-400', 'font-medium');
-            document.getElementById(`tab-btn-${aba}`).classList.add('text-emerald-600', 'font-bold');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+            const statusEl = document.getElementById('sync-status');
+            statusEl.textContent = "A puxar dados da planilha...";
+            statusEl.classList.remove('hidden');
 
-        function setTipo(tipo, prefixo) {
-            tipoEstado[prefixo] = tipo;
-            const btnDesp = document.getElementById(`btn-${prefixo}-Despesa`);
-            const btnRec = document.getElementById(`btn-${prefixo}-Receita`);
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?aba=${encodeURIComponent(nomeAba)}`);
+                const dadosPlanilha = await response.json();
 
-            if (tipo === 'Despesa') {
-                btnDesp.className = "py-2 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm";
-                btnRec.className = "py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700";
-            } else {
-                btnRec.className = "py-2 rounded-xl text-sm font-semibold border bg-emerald-600 text-white border-emerald-600 shadow-sm";
-                btnDesp.className = "py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700";
-            }
-            atualizarCategorias(prefixo);
-        }
-
-        function atualizarCategorias(prefixo) {
-            const selectCategoria = document.getElementById(`${prefixo}-categoria`);
-            selectCategoria.innerHTML = '';
-            const categorias = Object.keys(estruturaCategorias[tipoEstado[prefixo]]);
-            categorias.forEach(cat => {
-                selectCategoria.innerHTML += `<option value="${cat}">${cat}</option>`;
-            });
-            atualizarSubcategorias(prefixo);
-        }
-
-        function atualizarSubcategorias(prefixo) {
-            const cat = document.getElementById(`${prefixo}-categoria`).value;
-            const selectSub = document.getElementById(`${prefixo}-subcategoria`);
-            selectSub.innerHTML = '';
-            const subcategorias = estruturaCategorias[tipoEstado[prefixo]][cat] || [];
-            subcategorias.forEach(sub => {
-                selectSub.innerHTML += `<option value="${sub}">${sub}</option>`;
-            });
-        }
-
-        function abrirModalItem(tipoItem, prefixo) {
-            contextoModal = { prefixo: prefixo, tipo: tipoItem };
-            document.getElementById('modal-titulo').textContent = tipoItem === 'categoria' ? 'Nova Categoria' : 'Nova Subcategoria';
-            document.getElementById('modal-item').classList.remove('hidden');
-            document.getElementById('modal-item').classList.add('flex');
-            document.getElementById('novo-item-input').focus();
-        }
-
-        function fecharModalItem() {
-            document.getElementById('modal-item').classList.remove('flex');
-            document.getElementById('modal-item').classList.add('hidden');
-            document.getElementById('novo-item-input').value = '';
-        }
-
-        function salvarNovoItem() {
-            const nome = document.getElementById('novo-item-input').value.trim();
-            if (!nome) return alert('Inválido.');
-            
-            let tipoAt = tipoEstado[contextoModal.prefixo];
-            
-            if (contextoModal.tipo === 'categoria') {
-                if (!estruturaCategorias[tipoAt][nome]) {
-                    estruturaCategorias[tipoAt][nome] = [];
-                    atualizarCategorias('exec'); atualizarCategorias('plan'); // Atualiza ambos
-                    document.getElementById(`${contextoModal.prefixo}-categoria`).value = nome;
-                }
-            } else {
-                const catSel = document.getElementById(`${contextoModal.prefixo}-categoria`).value;
-                if (!estruturaCategorias[tipoAt][catSel].includes(nome)) {
-                    estruturaCategorias[tipoAt][catSel].push(nome);
-                    atualizarSubcategorias('exec'); atualizarSubcategorias('plan');
-                    document.getElementById(`${contextoModal.prefixo}-subcategoria`).value = nome;
-                }
-            }
-            localStorage.setItem('finance_estrutura', JSON.stringify(estruturaCategorias));
-            fecharModalItem();
-        }
-
-        async function salvarTransacao(e, prefixo) {
-            e.preventDefault();
-            const valorReal = lerValorDoInput(`${prefixo}-valor`);
-            if (valorReal <= 0) return alert('Informe um valor válido.');
-
-            const nova = {
-                id: Date.now(),
-                tipo: tipoEstado[prefixo],
-                status: prefixo === 'exec' ? 'Executado' : 'Planejado', // Regra de negócio forte
-                data: document.getElementById(`${prefixo}-data`).value,
-                categoria: document.getElementById(`${prefixo}-categoria`).value,
-                subcategoria: document.getElementById(`${prefixo}-subcategoria`).value,
-                pagamento: document.getElementById(`${prefixo}-pagamento`).value,
-                descricao: document.getElementById(`${prefixo}-descricao`).value,
-                valor: valorReal
-            };
-
-            transacoes.push(nova);
-            localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-            
-            // Limpar formulário
-            document.getElementById(`${prefixo}-valor`).value = '';
-            document.getElementById(`${prefixo}-descricao`).value = '';
-            
-            atualizarDados();
-
-            if (APPS_SCRIPT_URL) {
-                const statusEl = document.getElementById('sync-status');
-                statusEl.textContent = "A enviar folha..."; statusEl.classList.remove('hidden');
-                try {
-                    await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(nova) });
-                    statusEl.textContent = "Guardado!"; setTimeout(() => statusEl.classList.add('hidden'), 3000);
-                } catch (err) { statusEl.textContent = "Erro rede"; }
-            }
-            if(prefixo === 'plan') mudarAba('executar'); // Volta ao foco após planejar
-        }
-
-        function alternarStatus(id) {
-            const index = transacoes.findIndex(t => t.id === id);
-            if (index > -1) {
-                const transacao = transacoes[index];
-                let novoStatus = transacao.status === 'Planejado' ? 'Executado' : 'Planejado';
-                let novoValor = transacao.valor;
-                let valorOriginal = transacao.valor;
-                let criarRestante = false;
-                let valorRestante = 0;
-
-                if (novoStatus === 'Executado') {
-                    let valorSugerido = transacao.valor.toFixed(2).replace('.', ',');
-                    let inputValor = window.prompt(`Confirme o valor final pago para:\n${transacao.descricao}`, valorSugerido);
-                    if (inputValor === null) return;
-                    
-                    inputValor = inputValor.replace(/\./g, '').replace(',', '.');
-                    let valorParseado = parseFloat(inputValor);
-                    if (isNaN(valorParseado) || valorParseado <= 0) return alert("Valor inválido.");
-                    
-                    novoValor = valorParseado;
-
-                    // Envelope Logic
-                    if (novoValor < valorOriginal) {
-                        valorRestante = valorOriginal - novoValor;
-                        let formt = valorRestante.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        criarRestante = window.confirm(`Sobrou troco no envelope! Manter saldo de ${formt} como "Planejado"?`);
-                    }
-                }
-
-                transacoes[index].status = novoStatus;
-                transacoes[index].valor = novoValor;
-                
-                let novaT = null;
-                if (criarRestante) {
-                    novaT = { ...transacao, id: Date.now() + 1, status: 'Planejado', valor: valorRestante, descricao: transacao.descricao + " (Saldo)" };
-                    transacoes.push(novaT);
-                }
-
-                localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-                atualizarDados();
-
-                if (APPS_SCRIPT_URL) {
-                    fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({acao: "atualizar_status", id: transacao.id, data: transacao.data, status: novoStatus, valor: novoValor}) })
-                    .then(() => { if (criarRestante) fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(novaT) }); });
-                }
-            }
-        }
-
-        function excluirTransacao(id) {
-            if (confirm('Excluir lançamento?')) {
-                transacoes = transacoes.filter(t => t.id !== id);
-                localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-                atualizarDados();
-            }
-        }
-
-        function atualizarDados() {
-            const mesFiltro = document.getElementById('filtro-mes').value;
-            
-            // 1. ATUALIZAR LISTA DE PENDENTES (Todos os planeados ordenados por data)
-            const pendentes = transacoes.filter(t => t.status === 'Planejado').sort((a, b) => new Date(a.data) - new Date(b.data));
-            const listaPendentes = document.getElementById('lista-pendentes');
-            listaPendentes.innerHTML = pendentes.length === 0 ? `<div class="p-4 text-center text-xs text-slate-400">Tudo em dia! Sem pendências.</div>` : '';
-            
-            pendentes.forEach(t => {
-                listaPendentes.innerHTML += `
-                    <div class="p-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                        <div class="flex-1 space-y-0.5 pr-2">
-                            <p class="text-xs font-bold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-200'}">${t.categoria} <span class="font-normal text-[10px] text-slate-400">- ${formatarData(t.data)}</span></p>
-                            <p class="text-[10px] text-slate-500 truncate">${t.descricao}</p>
-                            <p class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-rose-500'}">R$ ${t.valor.toFixed(2).replace('.', ',')}</p>
-                        </div>
-                        <button onclick="alternarStatus(${t.id})" class="h-10 w-10 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full flex items-center justify-center shadow transition active:scale-95">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                    </div>`;
-            });
-
-            // 2. ATUALIZAR CONSULTAS & DASHBOARD (Apenas Mês Selecionado)
-            const filtradasMes = transacoes.filter(t => t.data.startsWith(mesFiltro)).sort((a, b) => new Date(b.data) - new Date(a.data));
-            
-            let tRec = 0, tDesp = 0;
-            const listaCons = document.getElementById('lista-transacoes');
-            listaCons.innerHTML = filtradasMes.length === 0 ? `<div class="p-6 text-center text-slate-400 text-sm">Nenhum registo no mês.</div>` : '';
-
-            filtradasMes.forEach(t => {
-                if (t.status === 'Executado') { t.tipo === 'Receita' ? tRec += t.valor : tDesp += t.valor; }
-                
-                const btnStatus = t.status === 'Planejado' 
-                    ? `<button onclick="alternarStatus(${t.id})" class="text-emerald-500 p-1 mr-1"><i class="fa-solid fa-check-circle"></i></button>`
-                    : `<button onclick="alternarStatus(${t.id})" class="text-amber-500 p-1 mr-1"><i class="fa-solid fa-clock-rotate-left"></i></button>`;
-
-                listaCons.innerHTML += `
-                    <div class="p-3.5 flex justify-between items-center border-b border-slate-50 dark:border-slate-800">
-                        <div class="space-y-0.5">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-500' : 'text-rose-500'}">${t.categoria}</span>
-                                <span class="text-[9px] px-1 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${t.status}</span>
-                                <span class="text-[10px] text-slate-400">${formatarData(t.data)}</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500">${t.descricao}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-bold">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>
-                            <div class="flex items-center border-l pl-2 ml-2 dark:border-slate-700">
-                                ${btnStatus}
-                                <button onclick="excluirTransacao(${t.id})" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-
-            document.getElementById('card-saldo').textContent = `R$ ${(tRec - tDesp).toFixed(2).replace('.', ',')}`;
-            document.getElementById('card-receitas').textContent = `R$ ${tRec.toFixed(2).replace('.', ',')}`;
-            document.getElementById('card-despesas').textContent = `R$ ${tDesp.toFixed(2).replace('.', ',')}`;
-            document.getElementById('total-registros').textContent = `${filtradasMes.length} reg.`;
-
-            atualizarGraficosConcentricos(filtradasMes);
-        }
-
-        function formatarData(iso) { const [a, m, d] = iso.split('-'); return `${d}/${m}`; }
-
-        function atualizarGraficosConcentricos(f) {
-            const re = f.filter(t => t.tipo === 'Receita' && t.status === 'Executado').reduce((a,b)=>a+b.valor,0);
-            const rp = f.filter(t => t.tipo === 'Receita' && t.status === 'Planejado').reduce((a,b)=>a+b.valor,0);
-            const de = f.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').reduce((a,b)=>a+b.valor,0);
-            const dp = f.filter(t => t.tipo === 'Despesa' && t.status === 'Planejado').reduce((a,b)=>a+b.valor,0);
-
-            const bg = document.getElementById('badge-cenario');
-            let outD, outC, inD, inC;
-            if (re+rp >= de+dp) {
-                bg.textContent = "SUPERÁVIT"; bg.className = "text-[10px] px-2 rounded-full font-bold bg-emerald-100 text-emerald-700";
-                outD=[re,rp]; outC=['#10b981','#34d399']; inD=[de,dp,(re+rp)-(de+dp)]; inC=['#f43f5e','#fb7185','#3b82f6'];
-            } else {
-                bg.textContent = "DÉFICIT"; bg.className = "text-[10px] px-2 rounded-full font-bold bg-rose-100 text-rose-700";
-                outD=[de,dp]; outC=['#f43f5e','#fb7185']; inD=[re,rp,(de+dp)-(re+rp)]; inC=['#10b981','#34d399','#f59e0b'];
-            }
-
-            if (concentricChartInstance) concentricChartInstance.destroy();
-            concentricChartInstance = new Chart(document.getElementById('concentricChart'), {
-                type: 'doughnut', data: { datasets: [{data:outD,backgroundColor:outC,borderWidth:0},{data:inD,backgroundColor:inC,borderWidth:0}] }, options: {responsive:true, maintainAspectRatio:false, rotation:-90, circumference:360, plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}
-            });
-
-            const desCat = {}; f.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').forEach(t => desCat[t.categoria] = (desCat[t.categoria]||0) + t.valor);
-            if (doughnutChartInstance) doughnutChartInstance.destroy();
-            doughnutChartInstance = new Chart(document.getElementById('doughnutChart'), {
-                type: 'doughnut', data: { labels: Object.keys(desCat), datasets: [{data: Object.values(desCat), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899']}] }, options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}
-            });
-        }
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            document.getElementById('theme-icon').className = document.documentElement.classList.contains('dark') ? "fa-solid fa-moon text-sm" : "fa-solid fa-sun text-sm";
-        }
-    </script>
-    
-    <script> if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('sw.js')); } </script>
-</body>
-</html>
+                if (Array.isArray(dadosPlanilha)) {
+                    // Mescla os dados da planilha com os locais, evitando duplicados por ID
+                    let idsLocais = new Set(transacoes.map(t => String(t.id)));
+               
