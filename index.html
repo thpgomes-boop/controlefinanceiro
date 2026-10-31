@@ -1,642 +1,448 @@
 <!DOCTYPE html>
-<html lang="pt-PT" class="dark">
+<html lang="pt-BR" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finanças Família</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Finanças">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: { colors: { primary: '#10b981', darkBg: '#0f172a', cardBg: '#1e293b' } }
-            }
-        }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanças Família</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanças">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{colors:{darkBg:'#0f172a',cardBg:'#1e293b'}}}}</script>
+<style type="text/tailwindcss">
+  .card{@apply bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700}
+  .inp{@apply w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none}
+  .lbl{@apply block text-[10px] font-semibold uppercase text-slate-400 mb-1}
+  .box{@apply p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5}
+  .sel{@apply w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-slate-100 dark:bg-darkBg text-slate-800 dark:text-slate-100 min-h-screen pb-20 transition-colors duration-300">
 
-    <header class="bg-white dark:bg-cardBg shadow-sm sticky top-0 z-50">
-        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2.5">
-                <div class="bg-emerald-500 text-white p-2 rounded-xl shadow">
-                    <i class="fa-solid fa-wallet text-base"></i>
-                </div>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight">Finanças Família</h1>
-                    <span id="sync-status" class="text-[10px] text-amber-500 font-medium hidden">A sincronizar...</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="carregarDadosDaPlanilha()" class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 transition" title="Puxar dados da planilha">
-                    <i class="fa-solid fa-cloud-arrow-down text-sm"></i>
-                </button>
-                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition">
-                    <i id="theme-icon" class="fa-solid fa-moon text-sm"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="max-w-md mx-auto p-4 space-y-4">
-        
-        <!-- ABA 1: EXECUTAR -->
-        <section id="view-executar" class="space-y-4">
-            <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <h2 class="text-sm font-bold mb-3 flex items-center space-x-2 text-emerald-600 dark:text-emerald-400">
-                    <i class="fa-solid fa-bolt"></i><span>Gasto Rápido / Avulso</span>
-                </h2>
-                <form onsubmit="salvarTransacao(event, 'exec')" class="space-y-3">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="btn-exec-Despesa" onclick="setTipo('Despesa', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm">Despesa</button>
-                        <button type="button" id="btn-exec-Receita" onclick="setTipo('Receita', 'exec')" class="py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200">Receita</button>
-                    </div>
-                    
-                    <div class="flex space-x-2">
-                        <div class="w-1/2">
-                            <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Data</label>
-                            <input type="date" id="exec-data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none">
-                        </div>
-                        <div class="w-1/2">
-                            <label class="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Valor</label>
-                            <input type="text" id="exec-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-base font-bold text-emerald-600 outline-none">
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria</label>
-                            <button type="button" onclick="abrirModalItem('categoria', 'exec')" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
-                                <i class="fa-solid fa-plus-circle"></i> Nova Categoria
-                            </button>
-                        </div>
-                        <select id="exec-categoria" onchange="atualizarSubcategorias('exec')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>
-                            <button type="button" onclick="abrirModalItem('subcategoria', 'exec')" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">
-                                <i class="fa-solid fa-plus-circle"></i> Nova Subcategoria
-                            </button>
-                        </div>
-                        <select id="exec-subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
-                    </div>
-
-                    <input type="text" id="exec-descricao" placeholder="Descrição rápida..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-sm outline-none">
-                    
-                    <div class="flex justify-between items-center space-x-2">
-                        <select id="exec-pagamento" class="w-1/2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-xs outline-none">
-                            <option value="Pix">Pix</option><option value="Cartão de Crédito">Crédito</option><option value="Cartão de Débito">Débito</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option>
-                        </select>
-                        <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-check"></i><span>Lançar</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div class="p-3 border-b border-slate-200 dark:border-slate-700 bg-amber-50 dark:bg-amber-900/20 flex justify-between items-center">
-                    <h3 class="text-xs font-bold text-amber-600 dark:text-amber-500 flex items-center space-x-2">
-                        <i class="fa-solid fa-clock"></i><span>Pendentes / Envelopes</span>
-                    </h3>
-                    <button onclick="carregarDadosDaPlanilha()" class="text-[10px] bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded font-semibold text-amber-900 dark:text-amber-100">Atualizar</button>
-                </div>
-                <div id="lista-pendentes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto"></div>
-            </div>
-        </section>
-
-        <!-- ABA 2: PLANEJAR -->
-        <section id="view-planejar" class="space-y-4 hidden">
-            <div class="bg-white dark:bg-cardBg p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 border-l-4 border-l-amber-500">
-                <h2 class="text-base font-bold mb-1 flex items-center space-x-2">
-                    <i class="fa-solid fa-calendar-plus text-amber-500"></i><span>Novo Planeamento</span>
-                </h2>
-                <p class="text-[11px] text-slate-400 mb-4">Lançamentos criados aqui ficarão como "Pendentes".</p>
-                <form onsubmit="salvarTransacao(event, 'plan')" class="space-y-4">
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="btn-plan-Despesa" onclick="setTipo('Despesa', 'plan')" class="py-2.5 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm">Despesa</button>
-                        <button type="button" id="btn-plan-Receita" onclick="setTipo('Receita', 'plan')" class="py-2.5 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200">Receita</button>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Data Prevista</label>
-                        <input type="date" id="plan-data" required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Valor Previsto (R$)</label>
-                        <input type="text" id="plan-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-lg font-bold text-amber-600 outline-none">
-                    </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-[10px] font-bold uppercase text-slate-500">Categoria</label>
-                            <button type="button" onclick="abrirModalItem('categoria', 'plan')" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold hover:underline">
-                                <i class="fa-solid fa-plus-circle"></i> Nova Categoria
-                            </button>
-                        </div>
-                        <select id="plan-categoria" onchange="atualizarSubcategorias('plan')" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-700/60 space-y-1.5">
-                        <div class="flex justify-between items-center">
-                            <label class="block text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>
-                            <button type="button" onclick="abrirModalItem('subcategoria', 'plan')" class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold hover:underline">
-                                <i class="fa-solid fa-plus-circle"></i> Nova Subcategoria
-                            </button>
-                        </div>
-                        <select id="plan-subcategoria" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs outline-none"></select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Forma de Pagamento</label>
-                        <select id="plan-pagamento" class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
-                            <option value="Pix">Pix</option><option value="Cartão de Crédito">Cartão de Crédito</option><option value="Cartão de Débito">Cartão de Débito</option><option value="Dinheiro">Dinheiro</option><option value="Boleto">Boleto</option><option value="Desconto em Folha">Desconto em Folha</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Descrição</label>
-                        <input type="text" id="plan-descricao" placeholder="Ex: Aluguel da casa..." required class="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none">
-                    </div>
-                    <button type="submit" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-calendar-check"></i><span>Agendar / Planejar</span>
-                    </button>
-                </form>
-            </div>
-        </section>
-
-        <!-- ABA 3: PAINEL -->
-        <section id="view-dashboard" class="space-y-4 hidden">
-            <div class="bg-white dark:bg-cardBg p-3 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de Referência:</span>
-                <input type="month" id="filtro-mes" onchange="carregarDadosDaPlanilha()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium outline-none">
-            </div>
-            <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                <div>
-                    <p class="text-xs font-medium text-slate-400">Saldo no Mês (Executado)</p>
-                    <h3 id="card-saldo" class="text-xl font-bold mt-0.5">R$ 0,00</h3>
-                </div>
-                <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 rounded-xl"><i class="fa-solid fa-scale-balanced"></i></div>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    <p class="text-[11px] font-medium text-slate-400">Receitas</p>
-                    <h3 id="card-receitas" class="text-base font-bold text-emerald-600 mt-0.5">R$ 0,00</h3>
-                </div>
-                <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                    <p class="text-[11px] font-medium text-slate-400">Despesas</p>
-                    <h3 id="card-despesas" class="text-base font-bold text-rose-600 mt-0.5">R$ 0,00</h3>
-                </div>
-            </div>
-            <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-sm font-semibold">Análise de Cenários</h3>
-                    <span id="badge-cenario" class="text-[10px] px-2 rounded-full font-bold">--</span>
-                </div>
-                <div class="relative h-56 flex justify-center"><canvas id="concentricChart"></canvas></div>
-            </div>
-            <div class="bg-white dark:bg-cardBg p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
-                <h3 class="text-sm font-semibold mb-3">Gastos por Categoria</h3>
-                <div class="relative h-56 flex justify-center"><canvas id="doughnutChart"></canvas></div>
-            </div>
-        </section>
-
-        <!-- ABA 4: CONSULTAS -->
-        <section id="view-consultas" class="space-y-4 hidden">
-            <div class="bg-white dark:bg-cardBg rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                    <h3 class="text-sm font-semibold">Lançamentos do Mês</h3>
-                    <span id="total-registros" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 reg.</span>
-                </div>
-                <div id="lista-transacoes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[65vh] overflow-y-auto"></div>
-            </div>
-        </section>
-    </main>
-
-    <!-- Modal -->
-    <div id="modal-item" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-white dark:bg-cardBg w-full max-w-sm rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                <h3 id="modal-titulo" class="font-bold text-sm">Adicionar</h3>
-                <button onclick="fecharModalItem()" class="text-slate-400"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="p-4 space-y-3">
-                <input type="text" id="novo-item-input" placeholder="Digite o nome..." class="w-full bg-slate-50 dark:bg-slate-800 border rounded-xl p-2.5 text-sm outline-none">
-                <button onclick="salvarNovoItem()" class="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-xl text-sm transition">Adicionar</button>
-            </div>
-        </div>
+<header class="bg-white dark:bg-cardBg shadow-sm sticky top-0 z-50">
+  <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center space-x-2.5">
+      <div class="bg-emerald-500 text-white p-2 rounded-xl shadow"><i class="fa-solid fa-wallet text-base"></i></div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight">Finanças Família</h1>
+        <span id="sync-status" class="text-[10px] text-amber-500 font-medium hidden"></span>
+      </div>
     </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="sincronizar()" class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" title="Sincronizar"><i class="fa-solid fa-cloud-arrow-down text-sm"></i></button>
+      <button onclick="alternarTema()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><i id="theme-icon" class="fa-solid fa-moon text-sm"></i></button>
+    </div>
+  </div>
+</header>
 
-    <!-- NAVEGAÇÃO -->
-    <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
-        <div class="max-w-md mx-auto grid grid-cols-4 py-2">
-            <button onclick="mudarAba('executar')" id="tab-btn-executar" class="flex flex-col items-center justify-center space-y-1 text-emerald-600 font-bold transition">
-                <i class="fa-solid fa-bolt text-base"></i><span class="text-[10px]">Executar</span>
-            </button>
-            <button onclick="mudarAba('planejar')" id="tab-btn-planejar" class="flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
-                <i class="fa-solid fa-calendar-plus text-base"></i><span class="text-[10px]">Planejar</span>
-            </button>
-            <button onclick="mudarAba('dashboard')" id="tab-btn-dashboard" class="flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
-                <i class="fa-solid fa-chart-pie text-base"></i><span class="text-[10px]">Painel</span>
-            </button>
-            <button onclick="mudarAba('consultas')" id="tab-btn-consultas" class="flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
-                <i class="fa-solid fa-list-ul text-base"></i><span class="text-[10px]">Consultas</span>
-            </button>
+<main class="max-w-md mx-auto p-4 space-y-4">
+
+  <section id="view-executar" class="space-y-4">
+    <div class="card p-4">
+      <h2 class="text-sm font-bold mb-3 flex items-center space-x-2 text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-bolt"></i><span>Gasto Rápido / Avulso</span></h2>
+      <form onsubmit="salvarTransacao(event,'exec')" class="space-y-3">
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="btn-exec-Despesa" onclick="setTipo('Despesa','exec')">Despesa</button>
+          <button type="button" id="btn-exec-Receita" onclick="setTipo('Receita','exec')">Receita</button>
         </div>
-    </nav>
+        <div class="flex space-x-2">
+          <div class="w-1/2"><label class="lbl">Data</label><input type="date" id="exec-data" required class="inp"></div>
+          <div class="w-1/2"><label class="lbl">Valor</label><input type="text" inputmode="numeric" id="exec-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="inp !text-base font-bold text-emerald-600"></div>
+        </div>
+        <div id="cats-exec" class="space-y-3"></div>
+        <input type="text" id="exec-descricao" placeholder="Descrição rápida..." required maxlength="120" class="inp">
+        <div class="flex justify-between items-center space-x-2">
+          <select id="exec-pagamento" class="inp !w-1/2 !text-xs"></select>
+          <button type="submit" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center space-x-2"><i class="fa-solid fa-check"></i><span>Lançar</span></button>
+        </div>
+      </form>
+    </div>
+    <div class="card overflow-hidden">
+      <div class="p-3 border-b border-slate-200 dark:border-slate-700 bg-amber-50 dark:bg-amber-900/20 flex justify-between items-center">
+        <h3 class="text-xs font-bold text-amber-600 dark:text-amber-500 flex items-center space-x-2"><i class="fa-solid fa-clock"></i><span>Pendentes / Envelopes</span></h3>
+        <button onclick="sincronizar()" class="text-[10px] bg-amber-200 dark:bg-amber-800 px-2 py-1 rounded font-semibold text-amber-900 dark:text-amber-100">Atualizar</button>
+      </div>
+      <div id="lista-pendentes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto"></div>
+    </div>
+  </section>
 
-    <script>
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
+  <section id="view-planejar" class="space-y-4 hidden">
+    <div class="card p-5 border-l-4 !border-l-amber-500">
+      <h2 class="text-base font-bold mb-1 flex items-center space-x-2"><i class="fa-solid fa-calendar-plus text-amber-500"></i><span>Novo Planejamento</span></h2>
+      <p class="text-[11px] text-slate-400 mb-4">Lançamentos criados aqui ficam como "Pendentes".</p>
+      <form onsubmit="salvarTransacao(event,'plan')" class="space-y-4">
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="btn-plan-Despesa" onclick="setTipo('Despesa','plan')">Despesa</button>
+          <button type="button" id="btn-plan-Receita" onclick="setTipo('Receita','plan')">Receita</button>
+        </div>
+        <div><label class="lbl">Data prevista</label><input type="date" id="plan-data" required class="inp"></div>
+        <div><label class="lbl">Valor previsto</label><input type="text" inputmode="numeric" id="plan-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="inp !text-lg font-bold text-amber-600"></div>
+        <div id="cats-plan" class="space-y-3"></div>
+        <div><label class="lbl">Forma de pagamento</label><select id="plan-pagamento" class="inp"></select></div>
+        <div><label class="lbl">Descrição</label><input type="text" id="plan-descricao" placeholder="Ex: Aluguel da casa..." required maxlength="120" class="inp"></div>
+        <button type="submit" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg flex items-center justify-center space-x-2"><i class="fa-solid fa-calendar-check"></i><span>Agendar / Planejar</span></button>
+      </form>
+    </div>
+  </section>
 
-        let estruturaCategorias = JSON.parse(localStorage.getItem('finance_estrutura')) || {
-            Receita: { "Salário": ["Salário Mensal"], "Investimentos": ["Dividendos"] },
-            Despesa: { 
-                "Moradia": ["Aluguel", "Energia", "Água"], 
-                "Alimentação": ["Supermercado", "Restaurante", "Padaria"],
-                "Transporte": ["Combustível"], 
-                "Outros": ["Impostos"] 
-            }
-        };
+  <section id="view-dashboard" class="space-y-4 hidden">
+    <div class="card p-3 flex items-center justify-between">
+      <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de referência:</span>
+      <input type="month" id="filtro-mes" onchange="sincronizar()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium outline-none">
+    </div>
+    <div class="card p-4 flex justify-between items-center">
+      <div><p class="text-xs font-medium text-slate-400">Saldo no mês (executado)</p><h3 id="card-saldo" class="text-xl font-bold mt-0.5">R$ 0,00</h3></div>
+      <div class="p-2.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 rounded-xl"><i class="fa-solid fa-scale-balanced"></i></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="card p-4"><p class="text-[11px] font-medium text-slate-400">Receitas</p><h3 id="card-receitas" class="text-base font-bold text-emerald-600 mt-0.5">R$ 0,00</h3></div>
+      <div class="card p-4"><p class="text-[11px] font-medium text-slate-400">Despesas</p><h3 id="card-despesas" class="text-base font-bold text-rose-600 mt-0.5">R$ 0,00</h3></div>
+    </div>
+    <div class="card p-4">
+      <div class="flex justify-between items-center mb-3"><h3 class="text-sm font-semibold">Análise de cenários</h3><span id="badge-cenario" class="text-[10px] px-2 rounded-full font-bold">--</span></div>
+      <div class="relative h-56"><canvas id="concentricChart"></canvas></div>
+    </div>
+    <div class="card p-4">
+      <h3 class="text-sm font-semibold mb-3">Gastos por categoria</h3>
+      <div class="relative h-64"><canvas id="catChart"></canvas></div>
+    </div>
+  </section>
 
-        let transacoes = JSON.parse(localStorage.getItem('finance_transacoes')) || [];
-        let tipoEstado = { exec: 'Despesa', plan: 'Despesa' };
-        let contextoModal = { prefixo: 'exec', tipo: 'categoria' }; 
-        let concentricChartInstance = null;
-        let doughnutChartInstance = null;
+  <section id="view-consultas" class="space-y-4 hidden">
+    <div class="card overflow-hidden">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <h3 class="text-sm font-semibold">Lançamentos do mês</h3>
+        <span id="total-registros" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 reg.</span>
+      </div>
+      <div id="lista-transacoes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[65vh] overflow-y-auto"></div>
+    </div>
+  </section>
+</main>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const hoje = new Date();
-            const mesAtual = hoje.toISOString().slice(0, 7);
-            document.getElementById('filtro-mes').value = mesAtual;
-            document.getElementById('exec-data').value = hoje.toISOString().slice(0, 10);
-            document.getElementById('plan-data').value = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1).toISOString().slice(0, 10);
+<div id="dlg" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-[60] p-4">
+  <div class="card w-full max-w-sm p-4 space-y-3">
+    <h3 id="dlg-titulo" class="font-bold text-sm"></h3>
+    <p id="dlg-msg" class="text-xs text-slate-400 break-words"></p>
+    <div id="dlg-campos" class="space-y-2"></div>
+    <div class="flex gap-2">
+      <button id="dlg-cancel" class="flex-1 py-2.5 rounded-xl text-sm bg-slate-100 dark:bg-slate-800"></button>
+      <button id="dlg-ok" class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 text-white"></button>
+    </div>
+  </div>
+</div>
 
-            atualizarCategorias('exec');
-            atualizarCategorias('plan');
-            carregarDadosDaPlanilha();
-        });
+<nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
+  <div class="max-w-md mx-auto grid grid-cols-4 py-2">
+    <button onclick="mudarAba('executar')" id="tab-btn-executar" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-bolt text-base"></i><span class="text-[10px]">Executar</span></button>
+    <button onclick="mudarAba('planejar')" id="tab-btn-planejar" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-calendar-plus text-base"></i><span class="text-[10px]">Planejar</span></button>
+    <button onclick="mudarAba('dashboard')" id="tab-btn-dashboard" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-chart-pie text-base"></i><span class="text-[10px]">Painel</span></button>
+    <button onclick="mudarAba('consultas')" id="tab-btn-consultas" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-list-ul text-base"></i><span class="text-[10px]">Consultas</span></button>
+  </div>
+</nav>
 
-        function obterNomeAbaPorIso(anoMesIso) {
-            const [ano, mes] = anoMesIso.split('-');
-            const meses = { "01": "Jan", "02": "Fev", "03": "Mar", "04": "Abr", "05": "Mai", "06": "Jun", "07": "Jul", "08": "Ago", "09": "Set", "10": "Out", "11": "Nov", "12": "Dez" };
-            return `${meses[mes] || "Nov"} ${ano}`;
-        }
+<script>
+const URL_API = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
+const MES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const PAG = ['Pix','Cartão de Crédito','Cartão de Débito','Dinheiro','Boleto','Desconto em Folha'];
+const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
+const DEF = {
+  Receita: { "Salário": ["Salário Mensal"], "Investimentos": ["Dividendos"] },
+  Despesa: { "Moradia": ["Aluguel","Energia","Água"], "Alimentação": ["Supermercado","Restaurante","Padaria"], "Transporte": ["Combustível"], "Outros": ["Impostos"] }
+};
 
-        async function carregarDadosDaPlanilha() {
-            if (!APPS_SCRIPT_URL) return;
-            const mesFiltroIso = document.getElementById('filtro-mes').value;
-            const nomeAba = obterNomeAbaPorIso(mesFiltroIso);
+// ---------- utilidades ----------
+const $ = id => document.getElementById(id);
+const LS = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch { return d; } };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r2 = v => Math.round(v * 100) / 100;
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const hojeLocal = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const abaDe = iso => MES[+iso.slice(5, 7) - 1] + ' ' + iso.slice(0, 4);
+const desloca = (ym, n) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const fdata = iso => { const p = String(iso || '').slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : ''; };
+const parseValor = s => { s = String(s).trim(); return parseFloat(s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s); };
+let ultimoId = 0;
+const novoId = () => (ultimoId = Math.max(Date.now(), ultimoId + 1));
 
-            const statusEl = document.getElementById('sync-status');
-            statusEl.textContent = "A puxar dados da planilha...";
-            statusEl.classList.remove('hidden');
+// ---------- estado ----------
+let cat = LS('fin2_cat', null) || structuredClone(DEF);
+let tx = LS('fin2_tx', []);
+let out = LS('fin2_out', []);
+let token = localStorage.getItem('fin_token') || '';
+let tipo = { exec: 'Despesa', plan: 'Despesa' };
+let charts = {};
+const salvar = () => { localStorage.setItem('fin2_cat', JSON.stringify(cat)); localStorage.setItem('fin2_tx', JSON.stringify(tx)); localStorage.setItem('fin2_out', JSON.stringify(out)); };
 
-            try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?aba=${encodeURIComponent(nomeAba)}`);
-                const dadosPlanilha = await response.json();
+let tAviso;
+function aviso(txt, ms = 3000) {
+  const el = $('sync-status'); el.textContent = txt; el.classList.remove('hidden');
+  clearTimeout(tAviso); if (ms) tAviso = setTimeout(() => el.classList.add('hidden'), ms);
+}
 
-                if (Array.isArray(dadosPlanilha)) {
-                    dadosPlanilha.forEach(itemDaPlanilha => {
-                        let idx = transacoes.findIndex(t => String(t.id) === String(itemDaPlanilha.id) || (t.descricao === itemDaPlanilha.descricao && t.data === itemDaPlanilha.data && t.valor === itemDaPlanilha.valor));
-                        if (idx > -1) {
-                            transacoes[idx].status = itemDaPlanilha.status;
-                            transacoes[idx].valor = itemDaPlanilha.valor;
-                        } else {
-                            transacoes.push(itemDaPlanilha);
-                        }
-                    });
+// ---------- diálogo (substitui prompt/confirm) ----------
+function dialogo({ titulo, msg = '', campos = [], ok = 'OK', nao = 'Cancelar' }) {
+  return new Promise(res => {
+    $('dlg-titulo').textContent = titulo; $('dlg-msg').textContent = msg;
+    $('dlg-campos').innerHTML = campos.map(c => `<input id="dlg-${c.id}" type="${c.type || 'text'}" value="${esc(c.value || '')}" placeholder="${esc(c.ph || '')}" class="inp">`).join('');
+    $('dlg-ok').textContent = ok; $('dlg-cancel').textContent = nao;
+    const m = $('dlg'); m.classList.replace('hidden', 'flex');
+    const fim = v => { m.classList.replace('flex', 'hidden'); res(v); };
+    $('dlg-ok').onclick = () => fim(Object.fromEntries(campos.map(c => [c.id, $('dlg-' + c.id).value])));
+    $('dlg-cancel').onclick = () => fim(null);
+    if (campos[0]) $('dlg-' + campos[0].id).focus();
+  });
+}
 
-                    localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-                    atualizarDados();
-                    statusEl.textContent = "Sincronizado!";
-                    setTimeout(() => statusEl.classList.add('hidden'), 2000);
-                }
-            } catch (err) {
-                console.error("Erro ao puxar dados:", err);
-                statusEl.textContent = "Erro ao carregar dados";
-                setTimeout(() => statusEl.classList.add('hidden'), 3000);
-                atualizarDados();
-            }
-        }
+// ---------- rede ----------
+let pedindo = null;
+function garantirToken() {
+  if (token) return Promise.resolve(true);
+  if (pedindo) return pedindo;
+  pedindo = dialogo({ titulo: 'Código de acesso', msg: 'Digite o token configurado no Apps Script (uma vez por aparelho).', campos: [{ id: 't', type: 'password', ph: 'Token' }], ok: 'Entrar' })
+    .then(r => { if (!r || !r.t.trim()) return false; token = r.t.trim(); localStorage.setItem('fin_token', token); return true; })
+    .finally(() => { pedindo = null; });
+  return pedindo;
+}
+async function api(params, body) {
+  if (body) return (await fetch(URL_API, { method: 'POST', body: JSON.stringify({ ...body, token }) })).json();
+  const u = new URL(URL_API);
+  Object.entries({ ...params, token }).forEach(([k, v]) => u.searchParams.set(k, v));
+  return (await fetch(u)).json();
+}
+function tokenInvalido() { token = ''; localStorage.removeItem('fin_token'); aviso('Token inválido — tente de novo'); }
 
-        function formatarMoeda(input) {
-            let apenasNumeros = input.value.replace(/\D/g, '');
-            if (!apenasNumeros) apenasNumeros = '0';
-            input.value = (parseFloat(apenasNumeros) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
+// fila offline: cada operação só sai da fila quando o servidor confirma
+let enviando = false;
+async function enviar() {
+  if (enviando || !out.length || !navigator.onLine || !(await garantirToken())) return;
+  enviando = true; aviso('A enviar...', 0);
+  try {
+    while (out.length) {
+      const r = await api(null, out[0]);
+      if (r.status === 'success' || r.code === 'nao_encontrado') out.shift();
+      else if (r.code === 'nao_autorizado') { tokenInvalido(); break; }
+      else if (r.code === 'busy' || r.code === 'erro') break;
+      else { aviso('Descartado: ' + (r.code || 'erro')); out.shift(); }
+      salvar();
+    }
+  } catch (e) { /* offline: tenta depois */ }
+  enviando = false; salvar();
+  aviso(out.length ? `${out.length} pendente(s) de envio` : 'Guardado!', out.length ? 0 : 2000);
+}
+function enfileira(op) { out.push(op); salvar(); enviar(); }
 
-        function lerValorDoInput(inputId) {
-            let val = document.getElementById(inputId).value.replace(/\D/g, '');
-            return parseFloat(val) / 100;
-        }
+function registrarCat(t) {
+  const c = cat[t.tipo]; if (!c) return;
+  c[t.categoria] = c[t.categoria] || [];
+  if (t.subcategoria && !c[t.categoria].includes(t.subcategoria)) c[t.categoria].push(t.subcategoria);
+}
 
-        function mudarAba(aba) {
-            ['executar', 'planejar', 'dashboard', 'consultas'].forEach(a => {
-                document.getElementById(`view-${a}`).classList.add('hidden');
-                document.getElementById(`tab-btn-${a}`).className = "flex flex-col items-center justify-center space-y-1 text-slate-400 transition";
-            });
-            document.getElementById(`view-${aba}`).classList.remove('hidden');
-            document.getElementById(`tab-btn-${aba}`).className = "flex flex-col items-center justify-center space-y-1 text-emerald-600 font-bold transition";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+async function sincronizar() {
+  const f = $('filtro-mes').value; render();
+  if (!navigator.onLine || !(await garantirToken())) return;
+  aviso('A sincronizar...', 0);
+  try {
+    await enviar();
+    const abas = [...new Set([-1, 0, 1].map(n => abaDe(desloca(f, n))))];
+    const [cfg, ...res] = await Promise.all([api({ acao: 'config' }), ...abas.map(a => api({ aba: a }))]);
+    if ([cfg, ...res].some(r => r && r.error === 'nao_autorizado')) return tokenInvalido();
+    if (res.some(r => !Array.isArray(r))) throw new Error('resposta inválida');
+    const pend = new Set(out.map(o => String(o.id)));
+    abas.forEach((a, i) => {   // a planilha é a fonte da verdade para cada mês carregado
+      tx = tx.filter(t => t.aba !== a || pend.has(String(t.id)));
+      const ids = new Set(tx.map(t => String(t.id)));
+      res[i].forEach(s => { if (!ids.has(String(s.id))) { s.aba = a; tx.push(s); registrarCat(s); } });
+    });
+    ['Receita', 'Despesa'].forEach(tp => Object.entries((cfg && cfg[tp]) || {}).forEach(([c, subs]) => {
+      cat[tp][c] = cat[tp][c] || [];
+      subs.forEach(s => { if (!cat[tp][c].includes(s)) cat[tp][c].push(s); });
+    }));
+    salvar(); refreshCats('exec'); refreshCats('plan'); render();
+    aviso(out.length ? `${out.length} pendente(s) de envio` : 'Sincronizado!', out.length ? 0 : 2000);
+  } catch (e) { console.error(e); aviso('Erro ao sincronizar'); }
+}
 
-        function setTipo(tipo, prefixo) {
-            tipoEstado[prefixo] = tipo;
-            const btnDesp = document.getElementById(`btn-${prefixo}-Despesa`);
-            const btnRec = document.getElementById(`btn-${prefixo}-Receita`);
-            if (tipo === 'Despesa') {
-                btnDesp.className = "py-2 rounded-xl text-sm font-semibold border bg-rose-500 text-white border-rose-500 shadow-sm";
-                btnRec.className = "py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200";
-            } else {
-                btnRec.className = "py-2 rounded-xl text-sm font-semibold border bg-emerald-600 text-white border-emerald-600 shadow-sm";
-                btnDesp.className = "py-2 rounded-xl text-sm font-semibold border bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200";
-            }
-            atualizarCategorias(prefixo);
-        }
+// ---------- migração única do app antigo (só planejados + categorias) ----------
+const opAdd = t => ({ acao: 'add', id: t.id, aba: t.aba, tipo: t.tipo, status: t.status, data: t.data, categoria: t.categoria, subcategoria: t.subcategoria, pagamento: t.pagamento, descricao: t.descricao, valor: t.valor });
+function migrar() {
+  if (localStorage.getItem('fin2_migrado')) return;
+  LS('finance_transacoes', []).filter(t => t && t.status === 'Planejado' && RE_DATA.test(String(t.data || '').slice(0, 10))).forEach(t => {
+    const n = { id: t.id || novoId(), tipo: t.tipo === 'Receita' ? 'Receita' : 'Despesa', status: 'Planejado', data: t.data.slice(0, 10), categoria: t.categoria || 'Outros', subcategoria: t.subcategoria || '', pagamento: PAG.includes(t.pagamento) ? t.pagamento : 'Pix', descricao: t.descricao || 'Lançamento', valor: r2(Number(t.valor) || 0) };
+    if (n.valor <= 0) return;
+    n.aba = abaDe(n.data); tx.push(n); registrarCat(n);
+    out.push({ ...opAdd(n), imp: true }); // imp: o servidor ignora se já existir na planilha
+  });
+  const est = LS('finance_estrutura', null), itens = [];
+  if (est) ['Receita', 'Despesa'].forEach(tp => Object.entries(est[tp] || {}).forEach(([c, subs]) => {
+    cat[tp][c] = cat[tp][c] || []; itens.push({ tipo: tp, categoria: c });
+    subs.forEach(s => { if (!cat[tp][c].includes(s)) cat[tp][c].push(s); itens.push({ tipo: tp, categoria: c, subcategoria: s }); });
+  }));
+  if (itens.length) out.push({ acao: 'config_add', itens });
+  localStorage.setItem('fin2_migrado', '1'); salvar();
+}
 
-        function atualizarCategorias(prefixo) {
-            const selectCategoria = document.getElementById(`${prefixo}-categoria`);
-            selectCategoria.innerHTML = '';
-            Object.keys(estruturaCategorias[tipoEstado[prefixo]]).forEach(cat => {
-                selectCategoria.innerHTML += `<option value="${cat}">${cat}</option>`;
-            });
-            atualizarSubcategorias(prefixo);
-        }
+// ---------- formulários ----------
+const BASE = 'py-2.5 rounded-xl text-sm font-semibold border ';
+const ON = { Despesa: 'bg-rose-500 text-white border-rose-500 shadow-sm', Receita: 'bg-emerald-600 text-white border-emerald-600 shadow-sm' };
+const OFF = 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700';
+function setTipo(t, p) {
+  tipo[p] = t;
+  ['Despesa', 'Receita'].forEach(x => $(`btn-${p}-${x}`).className = BASE + (x === t ? ON[x] : OFF));
+  refreshCats(p);
+}
+function blocoCat(p, cor) {
+  const link = (k, txt) => `<button type="button" onclick="novoItem('${k}','${p}')" class="text-[10px] ${cor} font-semibold hover:underline"><i class="fa-solid fa-plus-circle"></i> ${txt}</button>`;
+  return `<div class="box"><div class="flex justify-between items-center"><label class="text-[10px] font-bold uppercase text-slate-500">Categoria</label>${link('categoria', 'Nova categoria')}</div><select id="${p}-categoria" onchange="refreshSubs('${p}')" class="sel"></select></div>
+  <div class="box"><div class="flex justify-between items-center"><label class="text-[10px] font-bold uppercase text-slate-500">Subcategoria</label>${link('subcategoria', 'Nova subcategoria')}</div><select id="${p}-subcategoria" class="sel"></select></div>`;
+}
+const opts = a => a.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+function refreshCats(p, sel) {
+  const s = $(p + '-categoria'), antes = sel || s.value;
+  s.innerHTML = opts(Object.keys(cat[tipo[p]]));
+  if (antes && cat[tipo[p]][antes]) s.value = antes;
+  refreshSubs(p);
+}
+function refreshSubs(p, sel) {
+  const s = $(p + '-subcategoria'), antes = sel || s.value;
+  s.innerHTML = opts(cat[tipo[p]][$(p + '-categoria').value] || []);
+  if (antes) s.value = antes;
+}
+async function novoItem(kind, p) {
+  const r = await dialogo({ titulo: kind === 'categoria' ? 'Nova categoria' : 'Nova subcategoria', campos: [{ id: 'n', ph: 'Nome' }], ok: 'Adicionar' });
+  const nome = r && r.n.trim().slice(0, 60);
+  if (!nome) return;
+  if (/^[=+\-@]/.test(nome)) return aviso('Nome inválido');
+  const tp = tipo[p];
+  if (kind === 'categoria') {
+    cat[tp][nome] = cat[tp][nome] || [];
+    enfileira({ acao: 'config_add', tipo: tp, categoria: nome });
+    refreshCats(p, nome);
+  } else {
+    const c = $(p + '-categoria').value;
+    if (!c) return aviso('Escolha uma categoria antes');
+    if (!cat[tp][c].includes(nome)) cat[tp][c].push(nome);
+    enfileira({ acao: 'config_add', tipo: tp, categoria: c, subcategoria: nome });
+    refreshSubs(p, nome);
+  }
+  salvar();
+}
+function formatarMoeda(i) { i.value = (parseInt(i.value.replace(/\D/g, '') || '0', 10) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+const lerValor = id => parseInt($(id).value.replace(/\D/g, '') || '0', 10) / 100;
 
-        function atualizarSubcategorias(prefixo) {
-            const cat = document.getElementById(`${prefixo}-categoria`).value;
-            const selectSub = document.getElementById(`${prefixo}-subcategoria`);
-            selectSub.innerHTML = '';
-            (estruturaCategorias[tipoEstado[prefixo]][cat] || []).forEach(sub => {
-                selectSub.innerHTML += `<option value="${sub}">${sub}</option>`;
-            });
-        }
+function salvarTransacao(e, p) {
+  e.preventDefault();
+  const valor = lerValor(p + '-valor'), data = $(p + '-data').value;
+  if (!(valor > 0)) return aviso('Informe um valor válido.');
+  if (!RE_DATA.test(data)) return aviso('Data inválida.');
+  const t = { id: novoId(), tipo: tipo[p], status: p === 'exec' ? 'Executado' : 'Planejado', data, aba: abaDe(data),
+    categoria: $(p + '-categoria').value || 'Outros', subcategoria: $(p + '-subcategoria').value, pagamento: $(p + '-pagamento').value,
+    descricao: $(p + '-descricao').value.trim(), valor };
+  tx.push(t); $(p + '-valor').value = ''; $(p + '-descricao').value = '';
+  salvar(); render(); enfileira(opAdd(t));
+  if (p === 'plan') mudarAba('executar');
+}
 
-        function abrirModalItem(tipoItem, prefixo) {
-            contextoModal = { prefixo: prefixo, tipo: tipoItem };
-            document.getElementById('modal-titulo').textContent = tipoItem === 'categoria' ? 'Nova Categoria' : 'Nova Subcategoria';
-            document.getElementById('modal-item').classList.remove('hidden');
-            document.getElementById('modal-item').classList.add('flex');
-            document.getElementById('novo-item-input').focus();
-        }
+// ---------- ações sobre lançamentos ----------
+async function alternar(id) {
+  const t = tx.find(x => String(x.id) === String(id)); if (!t) return;
+  const novo = t.status === 'Planejado' ? 'Executado' : 'Planejado', dataOrig = t.data, valorOrig = t.valor;
+  let valor = t.valor, data = t.data, resto = 0;
+  if (novo === 'Executado') {
+    const r = await dialogo({ titulo: 'Confirmar pagamento', msg: t.descricao, ok: 'Confirmar',
+      campos: [{ id: 'v', value: t.valor.toFixed(2).replace('.', ','), ph: 'Valor pago' }, { id: 'd', type: 'date', value: hojeLocal() }] });
+    if (!r) return;
+    valor = r2(parseValor(r.v));
+    if (!(valor > 0)) return aviso('Valor inválido');
+    if (!RE_DATA.test(r.d)) return aviso('Data inválida');
+    data = r.d;
+    if (valor < valorOrig) {
+      resto = r2(valorOrig - valor);
+      if (!(await dialogo({ titulo: 'Sobrou no envelope', msg: `Manter ${brl(resto)} como Planejado?`, ok: 'Manter', nao: 'Não' }))) resto = 0;
+    }
+  }
+  t.status = novo; t.valor = valor; t.data = data;
+  enfileira({ acao: 'status', id: t.id, aba: t.aba, status: novo, valor, data });
+  if (resto) {
+    const n = { ...t, id: novoId(), status: 'Planejado', valor: resto, data: dataOrig, descricao: t.descricao.replace(/( \(Saldo\))+$/, '') + ' (Saldo)' };
+    tx.push(n); enfileira(opAdd(n));
+  }
+  salvar(); render();
+}
+async function excluir(id) {
+  const t = tx.find(x => String(x.id) === String(id)); if (!t) return;
+  if (!(await dialogo({ titulo: 'Excluir lançamento?', msg: t.descricao, ok: 'Excluir', nao: 'Cancelar' }))) return;
+  tx = tx.filter(x => x !== t); salvar(); render();
+  enfileira({ acao: 'excluir', id: t.id, aba: t.aba });
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  b.dataset.act === 'ok' ? alternar(b.dataset.id) : excluir(b.dataset.id);
+});
 
-        function fecharModalItem() {
-            document.getElementById('modal-item').classList.remove('flex');
-            document.getElementById('modal-item').classList.add('hidden');
-            document.getElementById('novo-item-input').value = '';
-        }
+// ---------- renderização ----------
+const linhaPend = t => `<div class="p-3 flex justify-between items-center"><div class="flex-1 min-w-0 pr-2 space-y-0.5"><p class="text-xs font-bold ${t.tipo === 'Receita' ? 'text-emerald-600' : ''}">${esc(t.categoria)} <span class="font-normal text-[10px] text-slate-400">- ${fdata(t.data)}</span></p><p class="text-[10px] text-slate-500 truncate">${esc(t.descricao)}</p><p class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-rose-500'}">${brl(t.valor)}</p></div><button data-act="ok" data-id="${esc(t.id)}" class="h-10 w-10 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full flex items-center justify-center shadow active:scale-95"><i class="fa-solid fa-check"></i></button></div>`;
+const linhaCons = t => { const pl = t.status === 'Planejado'; return `<div class="p-3.5 flex justify-between items-center"><div class="space-y-0.5 min-w-0"><div class="flex items-center space-x-2"><span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-500' : 'text-rose-500'}">${esc(t.categoria)}</span><span class="text-[9px] px-1 rounded ${pl ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">${t.status}</span><span class="text-[10px] text-slate-400">${fdata(t.data)}</span></div><p class="text-[11px] text-slate-500 truncate">${esc(t.descricao)}</p></div><div class="flex items-center space-x-2 shrink-0"><span class="text-sm font-bold">${brl(t.valor)}</span><div class="flex items-center border-l pl-2 ml-2 dark:border-slate-700"><button data-act="ok" data-id="${esc(t.id)}" class="${pl ? 'text-emerald-500' : 'text-amber-500'} p-1 mr-1"><i class="fa-solid ${pl ? 'fa-check-circle' : 'fa-clock-rotate-left'}"></i></button><button data-act="del" data-id="${esc(t.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div></div>`; };
 
-        function salvarNovoItem() {
-            const nome = document.getElementById('novo-item-input').value.trim();
-            if (!nome) return;
-            let tipoAt = tipoEstado[contextoModal.prefixo];
-            if (contextoModal.tipo === 'categoria') {
-                if (!estruturaCategorias[tipoAt][nome]) {
-                    estruturaCategorias[tipoAt][nome] = [];
-                    atualizarCategorias('exec'); atualizarCategorias('plan');
-                    document.getElementById(`${contextoModal.prefixo}-categoria`).value = nome;
-                }
-            } else {
-                const catSel = document.getElementById(`${contextoModal.prefixo}-categoria`).value;
-                if (!estruturaCategorias[tipoAt][catSel].includes(nome)) {
-                    estruturaCategorias[tipoAt][catSel].push(nome);
-                    atualizarSubcategorias('exec'); atualizarSubcategorias('plan');
-                    document.getElementById(`${contextoModal.prefixo}-subcategoria`).value = nome;
-                }
-            }
-            localStorage.setItem('finance_estrutura', JSON.stringify(estruturaCategorias));
-            fecharModalItem();
-        }
+function render() {
+  const aba = abaDe($('filtro-mes').value);
+  const pend = tx.filter(t => t.status === 'Planejado').sort((a, b) => a.data.localeCompare(b.data));
+  $('lista-pendentes').innerHTML = pend.length ? pend.map(linhaPend).join('') : '<div class="p-4 text-center text-xs text-slate-400">Tudo em dia! Sem pendências.</div>';
+  const mes = tx.filter(t => t.aba === aba).sort((a, b) => b.data.localeCompare(a.data));
+  $('lista-transacoes').innerHTML = mes.length ? mes.map(linhaCons).join('') : '<div class="p-6 text-center text-slate-400 text-sm">Nenhum registro no mês. Toque na nuvem para sincronizar.</div>';
+  $('total-registros').textContent = `${mes.length} reg.`;
+  const soma = (tp, st) => r2(mes.filter(t => t.tipo === tp && t.status === st).reduce((a, t) => a + t.valor, 0));
+  const re = soma('Receita', 'Executado'), rp = soma('Receita', 'Planejado'), de = soma('Despesa', 'Executado'), dp = soma('Despesa', 'Planejado');
+  $('card-saldo').textContent = brl(r2(re - de)); $('card-receitas').textContent = brl(re); $('card-despesas').textContent = brl(de);
+  graficos(mes, re, rp, de, dp);
+}
+function graficos(mes, re, rp, de, dp) {
+  const b = $('badge-cenario'); let o, oc, i, ic;
+  if (re + rp >= de + dp) {
+    b.textContent = 'SUPERÁVIT'; b.className = 'text-[10px] px-2 rounded-full font-bold bg-emerald-100 text-emerald-700';
+    o = [re, rp]; oc = ['#10b981', '#34d399']; i = [de, dp, r2(re + rp - de - dp)]; ic = ['#f43f5e', '#fb7185', '#3b82f6'];
+  } else {
+    b.textContent = 'DÉFICIT'; b.className = 'text-[10px] px-2 rounded-full font-bold bg-rose-100 text-rose-700';
+    o = [de, dp]; oc = ['#f43f5e', '#fb7185']; i = [re, rp, r2(de + dp - re - rp)]; ic = ['#10b981', '#34d399', '#f59e0b'];
+  }
+  Chart.defaults.color = '#94a3b8';
+  Object.values(charts).forEach(c => c.destroy());
+  charts.a = new Chart($('concentricChart'), { type: 'doughnut', data: { datasets: [{ data: o, backgroundColor: oc, borderWidth: 0 }, { data: i, backgroundColor: ic, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+  const dc = {};
+  mes.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').forEach(t => dc[t.categoria] = r2((dc[t.categoria] || 0) + t.valor));
+  charts.b = new Chart($('catChart'), { type: 'bar', data: { labels: Object.keys(dc), datasets: [{ data: Object.values(dc), backgroundColor: ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'], borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(148,163,184,.15)' }, ticks: { font: { size: 10 } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } } });
+}
 
-        async function salvarTransacao(e, prefixo) {
-            e.preventDefault();
-            const valorReal = lerValorDoInput(`${prefixo}-valor`);
-            if (valorReal <= 0) return alert('Informe um valor válido.');
+// ---------- navegação e tema ----------
+function mudarAba(a) {
+  ['executar', 'planejar', 'dashboard', 'consultas'].forEach(x => {
+    $('view-' + x).classList.toggle('hidden', x !== a);
+    $('tab-btn-' + x).className = 'flex flex-col items-center space-y-1 transition ' + (x === a ? 'text-emerald-600 font-bold' : 'text-slate-400');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function alternarTema() {
+  const dark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('fin_tema', dark ? 'escuro' : 'claro');
+  $('theme-icon').className = dark ? 'fa-solid fa-moon text-sm' : 'fa-solid fa-sun text-sm';
+}
 
-            const nova = {
-                id: Date.now(),
-                tipo: tipoEstado[prefixo],
-                status: prefixo === 'exec' ? 'Executado' : 'Planejado',
-                data: document.getElementById(`${prefixo}-data`).value,
-                categoria: document.getElementById(`${prefixo}-categoria`).value,
-                subcategoria: document.getElementById(`${prefixo}-subcategoria`).value,
-                pagamento: document.getElementById(`${prefixo}-pagamento`).value,
-                descricao: document.getElementById(`${prefixo}-descricao`).value,
-                valor: valorReal
-            };
-
-            transacoes.push(nova);
-            localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-            document.getElementById(`${prefixo}-valor`).value = '';
-            document.getElementById(`${prefixo}-descricao`).value = '';
-            
-            atualizarDados();
-
-            if (APPS_SCRIPT_URL) {
-                const statusEl = document.getElementById('sync-status');
-                statusEl.textContent = "A enviar..."; statusEl.classList.remove('hidden');
-                try {
-                    await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(nova) });
-                    statusEl.textContent = "Guardado!"; setTimeout(() => statusEl.classList.add('hidden'), 3000);
-                } catch (err) { statusEl.textContent = "Erro rede"; }
-            }
-            if(prefixo === 'plan') mudarAba('executar');
-        }
-
-        function alternarStatus(id) {
-            const index = transacoes.findIndex(t => t.id === id);
-            if (index > -1) {
-                const transacao = transacoes[index];
-                let novoStatus = transacao.status === 'Planejado' ? 'Executado' : 'Planejado';
-                let novoValor = transacao.valor;
-                let valorOriginal = transacao.valor;
-                let criarRestante = false;
-                let valorRestante = 0;
-
-                if (novoStatus === 'Executado') {
-                    let valorSugerido = transacao.valor.toFixed(2).replace('.', ',');
-                    let inputValor = window.prompt(`Confirme o valor final pago para:\n${transacao.descricao}`, valorSugerido);
-                    if (inputValor === null) return;
-                    
-                    inputValor = inputValor.replace(/\./g, '').replace(',', '.');
-                    let valorParseado = parseFloat(inputValor);
-                    if (isNaN(valorParseado) || valorParseado <= 0) return alert("Valor inválido.");
-                    
-                    novoValor = valorParseado;
-
-                    if (novoValor < valorOriginal) {
-                        valorRestante = valorOriginal - novoValor;
-                        let formt = valorRestante.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        criarRestante = window.confirm(`Sobrou troco no envelope! Manter saldo de ${formt} como "Planejado"?`);
-                    }
-                }
-
-                transacoes[index].status = novoStatus;
-                transacoes[index].valor = novoValor;
-                
-                let novaT = null;
-                if (criarRestante) {
-                    novaT = { ...transacao, id: Date.now() + 1, status: 'Planejado', valor: valorRestante, descricao: transacao.descricao + " (Saldo)" };
-                    transacoes.push(novaT);
-                }
-
-                localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-                atualizarDados();
-
-                if (APPS_SCRIPT_URL) {
-                    fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({acao: "atualizar_status", id: transacao.id, data: transacao.data, status: novoStatus, valor: novoValor}) })
-                    .then(() => { if (criarRestante) fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(novaT) }); });
-                }
-            }
-        }
-
-        function excluirTransacao(id) {
-            if (confirm('Deseja excluir este lançamento?')) {
-                const transacao = transacoes.find(t => t.id === id);
-
-                transacoes = transacoes.filter(t => t.id !== id);
-                localStorage.setItem('finance_transacoes', JSON.stringify(transacoes));
-                atualizarDados();
-
-                if (APPS_SCRIPT_URL && transacao) {
-                    const statusEl = document.getElementById('sync-status');
-                    statusEl.textContent = "A apagar da planilha...";
-                    statusEl.classList.remove('hidden');
-
-                    fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            acao: "excluir",
-                            id: transacao.id,
-                            data: transacao.data,
-                            descricao: transacao.descricao,
-                            valor: transacao.valor
-                        })
-                    }).then(() => {
-                        statusEl.textContent = "Apagado da planilha!";
-                        setTimeout(() => statusEl.classList.add('hidden'), 2000);
-                    }).catch(err => {
-                        statusEl.textContent = "Erro ao apagar";
-                        setTimeout(() => statusEl.classList.add('hidden'), 3000);
-                    });
-                }
-            }
-        }
-
-        function atualizarDados() {
-            const mesFiltro = document.getElementById('filtro-mes').value;
-            
-            const pendentes = transacoes.filter(t => t.status === 'Planejado').sort((a, b) => new Date(a.data) - new Date(b.data));
-            const listaPendentes = document.getElementById('lista-pendentes');
-            listaPendentes.innerHTML = pendentes.length === 0 ? `<div class="p-4 text-center text-xs text-slate-400">Tudo em dia! Sem pendências.</div>` : '';
-            
-            pendentes.forEach(t => {
-                listaPendentes.innerHTML += `
-                    <div class="p-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/40 transition">
-                        <div class="flex-1 space-y-0.5 pr-2">
-                            <p class="text-xs font-bold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-200'}">${t.categoria} <span class="font-normal text-[10px] text-slate-400">- ${formatarData(t.data)}</span></p>
-                            <p class="text-[10px] text-slate-500 truncate">${t.descricao}</p>
-                            <p class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-rose-500'}">R$ ${t.valor.toFixed(2).replace('.', ',')}</p>
-                        </div>
-                        <button onclick="alternarStatus(${t.id})" class="h-10 w-10 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full flex items-center justify-center shadow transition active:scale-95">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                    </div>`;
-            });
-
-            const filtradasMes = transacoes.filter(t => t.data.startsWith(mesFiltro)).sort((a, b) => new Date(b.data) - new Date(a.data));
-            let tRec = 0, tDesp = 0;
-            const listaCons = document.getElementById('lista-transacoes');
-            listaCons.innerHTML = filtradasMes.length === 0 ? `<div class="p-6 text-center text-slate-400 text-sm">Nenhum registo no mês. Clique no botão de nuvem acima para puxar da planilha.</div>` : '';
-
-            filtradasMes.forEach(t => {
-                if (t.status === 'Executado') { t.tipo === 'Receita' ? tRec += t.valor : tDesp += t.valor; }
-                const btnStatus = t.status === 'Planejado' 
-                    ? `<button onclick="alternarStatus(${t.id})" class="text-emerald-500 p-1 mr-1"><i class="fa-solid fa-check-circle"></i></button>`
-                    : `<button onclick="alternarStatus(${t.id})" class="text-amber-500 p-1 mr-1"><i class="fa-solid fa-clock-rotate-left"></i></button>`;
-
-                listaCons.innerHTML += `
-                    <div class="p-3.5 flex justify-between items-center border-b border-slate-50 dark:border-slate-800">
-                        <div class="space-y-0.5">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-500' : 'text-rose-500'}">${t.categoria}</span>
-                                <span class="text-[9px] px-1 rounded ${t.status === 'Executado' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${t.status}</span>
-                                <span class="text-[10px] text-slate-400">${formatarData(t.data)}</span>
-                            </div>
-                            <p class="text-[11px] text-slate-500">${t.descricao}</p>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm font-bold">R$ ${t.valor.toFixed(2).replace('.', ',')}</span>
-                            <div class="flex items-center border-l pl-2 ml-2 dark:border-slate-700">
-                                ${btnStatus}
-                                <button onclick="excluirTransacao(${t.id})" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-
-            document.getElementById('card-saldo').textContent = `R$ ${(tRec - tDesp).toFixed(2).replace('.', ',')}`;
-            document.getElementById('card-receitas').textContent = `R$ ${tRec.toFixed(2).replace('.', ',')}`;
-            document.getElementById('card-despesas').textContent = `R$ ${tDesp.toFixed(2).replace('.', ',')}`;
-            document.getElementById('total-registros').textContent = `${filtradasMes.length} reg.`;
-
-            atualizarGraficosConcentricos(filtradasMes);
-        }
-
-        // CORREÇÃO DA DATA: Extrai apenas os 10 primeiros caracteres (YYYY-MM-DD) de forma segura
-        function formatarData(iso) {
-            if (!iso) return '';
-            let limpo = String(iso).slice(0, 10);
-            const partes = limpo.split('-');
-            if (partes.length === 3) {
-                return `${partes[2]}/${partes[1]}`;
-            }
-            return iso;
-        }
-
-        function atualizarGraficosConcentricos(f) {
-            const re = f.filter(t => t.tipo === 'Receita' && t.status === 'Executado').reduce((a,b)=>a+b.valor,0);
-            const rp = f.filter(t => t.tipo === 'Receita' && t.status === 'Planejado').reduce((a,b)=>a+b.valor,0);
-            const de = f.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').reduce((a,b)=>a+b.valor,0);
-            const dp = f.filter(t => t.tipo === 'Despesa' && t.status === 'Planejado').reduce((a,b)=>a+b.valor,0);
-
-            const bg = document.getElementById('badge-cenario');
-            let outD, outC, inD, inC;
-            if (re+rp >= de+dp) {
-                bg.textContent = "SUPERÁVIT"; bg.className = "text-[10px] px-2 rounded-full font-bold bg-emerald-100 text-emerald-700";
-                outD=[re,rp]; outC=['#10b981','#34d399']; inD=[de,dp,(re+rp)-(de+dp)]; inC=['#f43f5e','#fb7185','#3b82f6'];
-            } else {
-                bg.textContent = "DÉFICIT"; bg.className = "text-[10px] px-2 rounded-full font-bold bg-rose-100 text-rose-700";
-                outD=[de,dp]; outC=['#f43f5e','#fb7185']; inD=[re,rp,(de+dp)-(re+rp)]; inC=['#10b981','#34d399','#f59e0b'];
-            }
-
-            if (concentricChartInstance) concentricChartInstance.destroy();
-            concentricChartInstance = new Chart(document.getElementById('concentricChart'), {
-                type: 'doughnut', data: { datasets: [{data:outD,backgroundColor:outC,borderWidth:0},{data:inD,backgroundColor:inC,borderWidth:0}] }, options: {responsive:true, maintainAspectRatio:false, rotation:-90, circumference:360, plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}
-            });
-
-            const desCat = {}; f.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').forEach(t => desCat[t.categoria] = (desCat[t.categoria]||0) + t.valor);
-            if (doughnutChartInstance) doughnutChartInstance.destroy();
-            doughnutChartInstance = new Chart(document.getElementById('doughnutChart'), {
-                type: 'doughnut', data: { labels: Object.keys(desCat), datasets: [{data: Object.values(desCat), backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899']}] }, options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}
-            });
-        }
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            document.getElementById('theme-icon').className = document.documentElement.classList.contains('dark') ? "fa-solid fa-moon text-sm" : "fa-solid fa-sun text-sm";
-        }
-    </script>
-    <script> if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('sw.js')); } </script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('fin_tema') === 'claro') { document.documentElement.classList.remove('dark'); $('theme-icon').className = 'fa-solid fa-sun text-sm'; }
+  const hoje = hojeLocal();
+  $('filtro-mes').value = hoje.slice(0, 7); $('exec-data').value = hoje; $('plan-data').value = desloca(hoje.slice(0, 7), 1) + '-01';
+  $('cats-exec').innerHTML = blocoCat('exec', 'text-emerald-600 dark:text-emerald-400');
+  $('cats-plan').innerHTML = blocoCat('plan', 'text-amber-600 dark:text-amber-400');
+  ['exec-pagamento', 'plan-pagamento'].forEach(id => $(id).innerHTML = opts(PAG));
+  migrar(); setTipo('Despesa', 'exec'); setTipo('Despesa', 'plan'); mudarAba('executar'); render(); sincronizar();
+});
+window.addEventListener('online', sincronizar);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) enviar(); });
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+</script>
 </body>
 </html>
