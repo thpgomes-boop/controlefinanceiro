@@ -41,6 +41,7 @@
 
 <main class="max-w-md mx-auto p-4 space-y-4">
 
+  <!-- EXECUTAR -->
   <section id="view-executar" class="space-y-4">
     <div class="card p-4">
       <h2 class="text-sm font-bold mb-3 flex items-center space-x-2 text-emerald-600 dark:text-emerald-400"><i class="fa-solid fa-bolt"></i><span>Gasto Rápido / Avulso</span></h2>
@@ -70,6 +71,7 @@
     </div>
   </section>
 
+  <!-- PLANEJAR -->
   <section id="view-planejar" class="space-y-4 hidden">
     <div class="card p-5 border-l-4 !border-l-amber-500">
       <h2 class="text-base font-bold mb-1 flex items-center space-x-2"><i class="fa-solid fa-calendar-plus text-amber-500"></i><span>Novo Planejamento</span></h2>
@@ -79,7 +81,10 @@
           <button type="button" id="btn-plan-Despesa" onclick="setTipo('Despesa','plan')">Despesa</button>
           <button type="button" id="btn-plan-Receita" onclick="setTipo('Receita','plan')">Receita</button>
         </div>
-        <div><label class="lbl">Data prevista</label><input type="date" id="plan-data" required class="inp"></div>
+        <div class="flex space-x-2">
+          <div class="w-2/3"><label class="lbl">Data prevista</label><input type="date" id="plan-data" required class="inp"></div>
+          <div class="w-1/3"><label class="lbl">Repetir (meses)</label><input type="number" id="plan-repetir" min="1" max="24" value="1" class="inp text-center font-semibold"></div>
+        </div>
         <div><label class="lbl">Valor previsto</label><input type="text" inputmode="numeric" id="plan-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="inp !text-lg font-bold text-amber-600"></div>
         <div id="cats-plan" class="space-y-3"></div>
         <div><label class="lbl">Forma de pagamento</label><select id="plan-pagamento" class="inp"></select></div>
@@ -89,6 +94,33 @@
     </div>
   </section>
 
+  <!-- DESEJOS / PLANOS -->
+  <section id="view-desejos" class="space-y-4 hidden">
+    <div class="card p-4 border-l-4 !border-l-violet-500">
+      <h2 class="text-sm font-bold mb-3 flex items-center space-x-2 text-violet-600 dark:text-violet-400"><i class="fa-solid fa-star"></i><span>Novo Desejo / Plano</span></h2>
+      <form onsubmit="salvarDesejo(event)" class="space-y-3">
+        <input type="text" id="des-nome" placeholder="O que queremos comprar ou fazer?" required maxlength="120" class="inp">
+        <div class="flex space-x-2">
+          <div class="w-1/2"><label class="lbl">Valor estimado</label><input type="text" inputmode="numeric" id="des-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="inp !text-base font-bold text-violet-500"></div>
+          <div class="w-1/2"><label class="lbl">Link de referência</label><input type="url" id="des-link" placeholder="https://..." class="inp"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <select id="des-categoria" onchange="refreshSubsDesejo()" class="sel"></select>
+          <select id="des-subcategoria" class="sel"></select>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center space-x-2"><i class="fa-solid fa-plus"></i><span>Adicionar à lista</span></button>
+      </form>
+    </div>
+    <div class="card overflow-hidden">
+      <div class="p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+        <h3 class="text-xs font-bold text-violet-600 dark:text-violet-400">Lista de Desejos</h3>
+        <span id="total-desejos" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 itens</span>
+      </div>
+      <div id="lista-desejos" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[55vh] overflow-y-auto"></div>
+    </div>
+  </section>
+
+  <!-- PAINEL -->
   <section id="view-dashboard" class="space-y-4 hidden">
     <div class="card p-3 flex items-center justify-between">
       <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de referência:</span>
@@ -112,13 +144,24 @@
     </div>
   </section>
 
+  <!-- CONSULTAS -->
   <section id="view-consultas" class="space-y-4 hidden">
     <div class="card overflow-hidden">
-      <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-        <h3 class="text-sm font-semibold">Lançamentos do mês</h3>
-        <span id="total-registros" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 reg.</span>
+      <div class="p-4 border-b border-slate-200 dark:border-slate-700 space-y-2.5">
+        <div class="flex justify-between items-center">
+          <h3 class="text-sm font-semibold">Lançamentos do mês</h3>
+          <span id="total-registros" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 reg.</span>
+        </div>
+        <select id="ordem-consultas" onchange="render()" class="sel">
+          <option value="data-desc">Ordenar: Data (mais recente)</option>
+          <option value="data-asc">Ordenar: Data (mais antiga)</option>
+          <option value="valor-desc">Ordenar: Maior valor</option>
+          <option value="valor-asc">Ordenar: Menor valor</option>
+          <option value="status-plan">Ordenar: Planejado primeiro</option>
+          <option value="status-exec">Ordenar: Executado primeiro</option>
+        </select>
       </div>
-      <div id="lista-transacoes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[65vh] overflow-y-auto"></div>
+      <div id="lista-transacoes" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[62vh] overflow-y-auto"></div>
     </div>
   </section>
 </main>
@@ -136,9 +179,10 @@
 </div>
 
 <nav class="bg-white dark:bg-cardBg border-t border-slate-200 dark:border-slate-700 fixed bottom-0 left-0 right-0 z-50 shadow-lg">
-  <div class="max-w-md mx-auto grid grid-cols-4 py-2">
+  <div class="max-w-md mx-auto grid grid-cols-5 py-2">
     <button onclick="mudarAba('executar')" id="tab-btn-executar" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-bolt text-base"></i><span class="text-[10px]">Executar</span></button>
     <button onclick="mudarAba('planejar')" id="tab-btn-planejar" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-calendar-plus text-base"></i><span class="text-[10px]">Planejar</span></button>
+    <button onclick="mudarAba('desejos')" id="tab-btn-desejos" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-star text-base"></i><span class="text-[10px]">Desejos</span></button>
     <button onclick="mudarAba('dashboard')" id="tab-btn-dashboard" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-chart-pie text-base"></i><span class="text-[10px]">Painel</span></button>
     <button onclick="mudarAba('consultas')" id="tab-btn-consultas" class="flex flex-col items-center space-y-1"><i class="fa-solid fa-list-ul text-base"></i><span class="text-[10px]">Consultas</span></button>
   </div>
@@ -163,6 +207,12 @@ const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' 
 const hojeLocal = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const abaDe = iso => MES[+iso.slice(5, 7) - 1] + ' ' + iso.slice(0, 4);
 const desloca = (ym, n) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const somaMeses = (iso, n) => {
+  const [a, m, d] = iso.split('-').map(Number);
+  const dt = new Date(a, m - 1 + n, 1);
+  const ultimo = new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(Math.min(d, ultimo)).padStart(2, '0')}`;
+};
 const fdata = iso => { const p = String(iso || '').slice(0, 10).split('-'); return p.length === 3 ? `${p[2]}/${p[1]}` : ''; };
 const parseValor = s => { s = String(s).trim(); return parseFloat(s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s); };
 let ultimoId = 0;
@@ -172,10 +222,16 @@ const novoId = () => (ultimoId = Math.max(Date.now(), ultimoId + 1));
 let cat = LS('fin2_cat', null) || structuredClone(DEF);
 let tx = LS('fin2_tx', []);
 let out = LS('fin2_out', []);
+let desejos = LS('fin2_desejos', []);
 let token = localStorage.getItem('fin_token') || '';
 let tipo = { exec: 'Despesa', plan: 'Despesa' };
 let charts = {};
-const salvar = () => { localStorage.setItem('fin2_cat', JSON.stringify(cat)); localStorage.setItem('fin2_tx', JSON.stringify(tx)); localStorage.setItem('fin2_out', JSON.stringify(out)); };
+const salvar = () => {
+  localStorage.setItem('fin2_cat', JSON.stringify(cat));
+  localStorage.setItem('fin2_tx', JSON.stringify(tx));
+  localStorage.setItem('fin2_out', JSON.stringify(out));
+  localStorage.setItem('fin2_desejos', JSON.stringify(desejos));
+};
 
 let tAviso;
 function aviso(txt, ms = 3000) {
@@ -183,11 +239,14 @@ function aviso(txt, ms = 3000) {
   clearTimeout(tAviso); if (ms) tAviso = setTimeout(() => el.classList.add('hidden'), ms);
 }
 
-// ---------- diálogo (substitui prompt/confirm) ----------
+// ---------- diálogo ----------
 function dialogo({ titulo, msg = '', campos = [], ok = 'OK', nao = 'Cancelar' }) {
   return new Promise(res => {
     $('dlg-titulo').textContent = titulo; $('dlg-msg').textContent = msg;
-    $('dlg-campos').innerHTML = campos.map(c => `<input id="dlg-${c.id}" type="${c.type || 'text'}" value="${esc(c.value || '')}" placeholder="${esc(c.ph || '')}" class="inp">`).join('');
+    $('dlg-campos').innerHTML = campos.map(c => c.options
+      ? `<select id="dlg-${c.id}" class="inp">${c.options.map(o => `<option value="${esc(o)}"${o === c.value ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+      : `<input id="dlg-${c.id}" type="${c.type || 'text'}" value="${esc(c.value || '')}" placeholder="${esc(c.ph || '')}" class="inp">`
+    ).join('');
     $('dlg-ok').textContent = ok; $('dlg-cancel').textContent = nao;
     const m = $('dlg'); m.classList.replace('hidden', 'flex');
     const fim = v => { m.classList.replace('flex', 'hidden'); res(v); };
@@ -208,14 +267,13 @@ function garantirToken() {
   return pedindo;
 }
 async function api(params, body) {
-  if (body) return (await fetch(URL_API, { method: 'POST', body: JSON.stringify({ ...body, token }) })).json();
+  if (body) return (await fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, token }) })).json();
   const u = new URL(URL_API);
   Object.entries({ ...params, token }).forEach(([k, v]) => u.searchParams.set(k, v));
   return (await fetch(u)).json();
 }
 function tokenInvalido() { token = ''; localStorage.removeItem('fin_token'); aviso('Token inválido — tente de novo'); }
 
-// fila offline: cada operação só sai da fila quando o servidor confirma
 let enviando = false;
 async function enviar() {
   if (enviando || !out.length || !navigator.onLine || !(await garantirToken())) return;
@@ -248,25 +306,30 @@ async function sincronizar() {
   try {
     await enviar();
     const abas = [...new Set([-1, 0, 1].map(n => abaDe(desloca(f, n))))];
-    const [cfg, ...res] = await Promise.all([api({ acao: 'config' }), ...abas.map(a => api({ aba: a }))]);
-    if ([cfg, ...res].some(r => r && r.error === 'nao_autorizado')) return tokenInvalido();
+    const [cfg, des, ...res] = await Promise.all([api({ acao: 'config' }), api({ acao: 'desejos' }), ...abas.map(a => api({ aba: a }))]);
+    if ([cfg, des, ...res].some(r => r && r.error === 'nao_autorizado')) return tokenInvalido();
     if (res.some(r => !Array.isArray(r))) throw new Error('resposta inválida');
-    const pend = new Set(out.map(o => String(o.id)));
-    abas.forEach((a, i) => {   // a planilha é a fonte da verdade para cada mês carregado
+    const pend = new Set(out.flatMap(o => o.itens ? o.itens.map(x => String(x.id)) : [String(o.id)]));
+    abas.forEach((a, i) => {
       tx = tx.filter(t => t.aba !== a || pend.has(String(t.id)));
       const ids = new Set(tx.map(t => String(t.id)));
       res[i].forEach(s => { if (!ids.has(String(s.id))) { s.aba = a; tx.push(s); registrarCat(s); } });
     });
+    if (Array.isArray(des)) {
+      desejos = desejos.filter(d => pend.has(String(d.id)));
+      const dIds = new Set(desejos.map(d => String(d.id)));
+      des.forEach(d => { if (!dIds.has(String(d.id))) desejos.push(d); });
+    }
     ['Receita', 'Despesa'].forEach(tp => Object.entries((cfg && cfg[tp]) || {}).forEach(([c, subs]) => {
       cat[tp][c] = cat[tp][c] || [];
       subs.forEach(s => { if (!cat[tp][c].includes(s)) cat[tp][c].push(s); });
     }));
-    salvar(); refreshCats('exec'); refreshCats('plan'); render();
+    salvar(); refreshCats('exec'); refreshCats('plan'); refreshCatsDesejo(); render();
     aviso(out.length ? `${out.length} pendente(s) de envio` : 'Sincronizado!', out.length ? 0 : 2000);
   } catch (e) { console.error(e); aviso('Erro ao sincronizar'); }
 }
 
-// ---------- migração única do app antigo (só planejados + categorias) ----------
+// ---------- migração ----------
 const opAdd = t => ({ acao: 'add', id: t.id, aba: t.aba, tipo: t.tipo, status: t.status, data: t.data, categoria: t.categoria, subcategoria: t.subcategoria, pagamento: t.pagamento, descricao: t.descricao, valor: t.valor });
 function migrar() {
   if (localStorage.getItem('fin2_migrado')) return;
@@ -274,7 +337,7 @@ function migrar() {
     const n = { id: t.id || novoId(), tipo: t.tipo === 'Receita' ? 'Receita' : 'Despesa', status: 'Planejado', data: t.data.slice(0, 10), categoria: t.categoria || 'Outros', subcategoria: t.subcategoria || '', pagamento: PAG.includes(t.pagamento) ? t.pagamento : 'Pix', descricao: t.descricao || 'Lançamento', valor: r2(Number(t.valor) || 0) };
     if (n.valor <= 0) return;
     n.aba = abaDe(n.data); tx.push(n); registrarCat(n);
-    out.push({ ...opAdd(n), imp: true }); // imp: o servidor ignora se já existir na planilha
+    out.push({ ...opAdd(n), imp: true });
   });
   const est = LS('finance_estrutura', null), itens = [];
   if (est) ['Receita', 'Despesa'].forEach(tp => Object.entries(est[tp] || {}).forEach(([c, subs]) => {
@@ -311,6 +374,16 @@ function refreshSubs(p, sel) {
   s.innerHTML = opts(cat[tipo[p]][$(p + '-categoria').value] || []);
   if (antes) s.value = antes;
 }
+function refreshCatsDesejo() {
+  const s = $('des-categoria'), antes = s.value;
+  s.innerHTML = opts(Object.keys(cat.Despesa));
+  if (antes && cat.Despesa[antes]) s.value = antes;
+  refreshSubsDesejo();
+}
+function refreshSubsDesejo() {
+  const s = $('des-subcategoria');
+  s.innerHTML = opts(cat.Despesa[$('des-categoria').value] || []);
+}
 async function novoItem(kind, p) {
   const r = await dialogo({ titulo: kind === 'categoria' ? 'Nova categoria' : 'Nova subcategoria', campos: [{ id: 'n', ph: 'Nome' }], ok: 'Adicionar' });
   const nome = r && r.n.trim().slice(0, 60);
@@ -320,13 +393,13 @@ async function novoItem(kind, p) {
   if (kind === 'categoria') {
     cat[tp][nome] = cat[tp][nome] || [];
     enfileira({ acao: 'config_add', tipo: tp, categoria: nome });
-    refreshCats(p, nome);
+    refreshCats(p, nome); refreshCatsDesejo();
   } else {
     const c = $(p + '-categoria').value;
     if (!c) return aviso('Escolha uma categoria antes');
     if (!cat[tp][c].includes(nome)) cat[tp][c].push(nome);
     enfileira({ acao: 'config_add', tipo: tp, categoria: c, subcategoria: nome });
-    refreshSubs(p, nome);
+    refreshSubs(p, nome); refreshSubsDesejo();
   }
   salvar();
 }
@@ -335,15 +408,85 @@ const lerValor = id => parseInt($(id).value.replace(/\D/g, '') || '0', 10) / 100
 
 function salvarTransacao(e, p) {
   e.preventDefault();
-  const valor = lerValor(p + '-valor'), data = $(p + '-data').value;
+  const valor = lerValor(p + '-valor'), dataBase = $(p + '-data').value;
   if (!(valor > 0)) return aviso('Informe um valor válido.');
-  if (!RE_DATA.test(data)) return aviso('Data inválida.');
-  const t = { id: novoId(), tipo: tipo[p], status: p === 'exec' ? 'Executado' : 'Planejado', data, aba: abaDe(data),
-    categoria: $(p + '-categoria').value || 'Outros', subcategoria: $(p + '-subcategoria').value, pagamento: $(p + '-pagamento').value,
-    descricao: $(p + '-descricao').value.trim(), valor };
-  tx.push(t); $(p + '-valor').value = ''; $(p + '-descricao').value = '';
-  salvar(); render(); enfileira(opAdd(t));
+  if (!RE_DATA.test(dataBase)) return aviso('Data inválida.');
+  const rep = p === 'plan' ? Math.max(1, Math.min(24, parseInt($('plan-repetir').value, 10) || 1)) : 1;
+  const descBase = $(p + '-descricao').value.trim();
+  const novos = [];
+  for (let i = 0; i < rep; i++) {
+    const data = i === 0 ? dataBase : somaMeses(dataBase, i);
+    const t = {
+      id: novoId(), tipo: tipo[p], status: p === 'exec' ? 'Executado' : 'Planejado', data, aba: abaDe(data),
+      categoria: $(p + '-categoria').value || 'Outros', subcategoria: $(p + '-subcategoria').value, pagamento: $(p + '-pagamento').value,
+      descricao: rep > 1 ? `${descBase} (${i + 1}/${rep})` : descBase, valor
+    };
+    tx.push(t); novos.push(t);
+  }
+  $(p + '-valor').value = ''; $(p + '-descricao').value = '';
+  if (p === 'plan') $('plan-repetir').value = '1';
+  salvar(); render();
+  enfileira(novos.length === 1 ? opAdd(novos[0]) : { acao: 'add_lote', itens: novos.map(opAdd) });
   if (p === 'plan') mudarAba('executar');
+}
+
+// ---------- desejos ----------
+function salvarDesejo(e) {
+  e.preventDefault();
+  const valor = lerValor('des-valor'), nome = $('des-nome').value.trim();
+  if (!(valor > 0)) return aviso('Informe um valor estimado.');
+  if (!nome) return aviso('Informe o nome.');
+  const d = {
+    id: novoId(), nome, valor, link: $('des-link').value.trim(),
+    categoria: $('des-categoria').value || 'Outros', subcategoria: $('des-subcategoria').value || '',
+    status: 'Na lista', abaPlanejada: '', txId: ''
+  };
+  desejos.push(d);
+  $('des-nome').value = ''; $('des-valor').value = ''; $('des-link').value = '';
+  salvar(); render();
+  enfileira({ acao: 'desejo_add', ...d });
+}
+
+async function planejarDesejo(id) {
+  const d = desejos.find(x => String(x.id) === String(id)); if (!d) return;
+  const r = await dialogo({
+    titulo: 'Enviar para planejamento', msg: `${d.nome} (${brl(d.valor)})`, ok: 'Planejar',
+    campos: [
+      { id: 'dt', type: 'date', value: desloca(hojeLocal().slice(0, 7), 1) + '-01' },
+      { id: 'pg', options: PAG, value: 'Pix' }
+    ]
+  });
+  if (!r || !RE_DATA.test(r.dt)) return;
+  const t = {
+    id: novoId(), tipo: 'Despesa', status: 'Planejado', data: r.dt, aba: abaDe(r.dt),
+    categoria: d.categoria, subcategoria: d.subcategoria, pagamento: r.pg,
+    descricao: d.nome, valor: d.valor
+  };
+  tx.push(t);
+  d.status = 'Planejado'; d.abaPlanejada = t.aba; d.txId = t.id;
+  salvar(); render();
+  enfileira(opAdd(t));
+  enfileira({ acao: 'desejo_update', id: d.id, status: d.status, abaPlanejada: d.abaPlanejada, txId: d.txId });
+}
+
+async function devolverDesejo(id) {
+  const d = desejos.find(x => String(x.id) === String(id)); if (!d) return;
+  if (!(await dialogo({ titulo: 'Devolver para a lista?', msg: `Remove "${d.nome}" do planejamento de ${d.abaPlanejada}.`, ok: 'Devolver' }))) return;
+  if (d.txId && d.abaPlanejada) {
+    tx = tx.filter(t => String(t.id) !== String(d.txId));
+    enfileira({ acao: 'excluir', id: d.txId, aba: d.abaPlanejada });
+  }
+  d.status = 'Na lista'; d.abaPlanejada = ''; d.txId = '';
+  salvar(); render();
+  enfileira({ acao: 'desejo_update', id: d.id, status: d.status, abaPlanejada: '', txId: '' });
+}
+
+async function excluirDesejo(id) {
+  const d = desejos.find(x => String(x.id) === String(id)); if (!d) return;
+  if (!(await dialogo({ titulo: 'Excluir desejo?', msg: d.nome, ok: 'Excluir' }))) return;
+  desejos = desejos.filter(x => x !== d);
+  salvar(); render();
+  enfileira({ acao: 'desejo_del', id: d.id });
 }
 
 // ---------- ações sobre lançamentos ----------
@@ -380,20 +523,44 @@ async function excluir(id) {
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
-  b.dataset.act === 'ok' ? alternar(b.dataset.id) : excluir(b.dataset.id);
+  const a = b.dataset.act, id = b.dataset.id;
+  if (a === 'ok') alternar(id);
+  else if (a === 'del') excluir(id);
+  else if (a === 'des-plan') planejarDesejo(id);
+  else if (a === 'des-dev') devolverDesejo(id);
+  else if (a === 'des-del') excluirDesejo(id);
 });
 
 // ---------- renderização ----------
 const linhaPend = t => `<div class="p-3 flex justify-between items-center"><div class="flex-1 min-w-0 pr-2 space-y-0.5"><p class="text-xs font-bold ${t.tipo === 'Receita' ? 'text-emerald-600' : ''}">${esc(t.categoria)} <span class="font-normal text-[10px] text-slate-400">- ${fdata(t.data)}</span></p><p class="text-[10px] text-slate-500 truncate">${esc(t.descricao)}</p><p class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-rose-500'}">${brl(t.valor)}</p></div><button data-act="ok" data-id="${esc(t.id)}" class="h-10 w-10 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full flex items-center justify-center shadow active:scale-95"><i class="fa-solid fa-check"></i></button></div>`;
 const linhaCons = t => { const pl = t.status === 'Planejado'; return `<div class="p-3.5 flex justify-between items-center"><div class="space-y-0.5 min-w-0"><div class="flex items-center space-x-2"><span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-500' : 'text-rose-500'}">${esc(t.categoria)}</span><span class="text-[9px] px-1 rounded ${pl ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">${t.status}</span><span class="text-[10px] text-slate-400">${fdata(t.data)}</span></div><p class="text-[11px] text-slate-500 truncate">${esc(t.descricao)}</p></div><div class="flex items-center space-x-2 shrink-0"><span class="text-sm font-bold">${brl(t.valor)}</span><div class="flex items-center border-l pl-2 ml-2 dark:border-slate-700"><button data-act="ok" data-id="${esc(t.id)}" class="${pl ? 'text-emerald-500' : 'text-amber-500'} p-1 mr-1"><i class="fa-solid ${pl ? 'fa-check-circle' : 'fa-clock-rotate-left'}"></i></button><button data-act="del" data-id="${esc(t.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div></div>`; };
+const linhaDesejo = d => {
+  const pl = d.status === 'Planejado';
+  const link = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" class="text-violet-500 hover:underline text-[10px] ml-1"><i class="fa-solid fa-arrow-up-right-from-square"></i> Link</a>` : '';
+  return `<div class="p-3.5 flex justify-between items-center gap-2"><div class="min-w-0 space-y-0.5"><div class="flex items-center flex-wrap gap-1.5"><span class="text-xs font-bold truncate">${esc(d.nome)}</span><span class="text-[9px] px-1.5 py-0.5 rounded font-medium ${pl ? 'bg-amber-100 text-amber-700' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'}">${pl ? 'Em ' + esc(d.abaPlanejada) : 'Na lista'}</span></div><p class="text-[10px] text-slate-400">${esc(d.categoria)}${d.subcategoria ? ' · ' + esc(d.subcategoria) : ''}${link}</p><p class="text-xs font-bold text-violet-500">${brl(d.valor)}</p></div><div class="flex items-center gap-1.5 shrink-0">${pl ? `<button data-act="des-dev" data-id="${esc(d.id)}" class="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Devolver</button>` : `<button data-act="des-plan" data-id="${esc(d.id)}" class="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Planejar</button>`}<button data-act="des-del" data-id="${esc(d.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div>`;
+};
+
+function ordenarMes(lista) {
+  const o = $('ordem-consultas').value;
+  return [...lista].sort((a, b) => {
+    if (o === 'data-asc') return a.data.localeCompare(b.data);
+    if (o === 'valor-desc') return b.valor - a.valor;
+    if (o === 'valor-asc') return a.valor - b.valor;
+    if (o === 'status-plan') return (a.status === 'Planejado' ? 0 : 1) - (b.status === 'Planejado' ? 0 : 1) || b.data.localeCompare(a.data);
+    if (o === 'status-exec') return (a.status === 'Executado' ? 0 : 1) - (b.status === 'Executado' ? 0 : 1) || b.data.localeCompare(a.data);
+    return b.data.localeCompare(a.data);
+  });
+}
 
 function render() {
   const aba = abaDe($('filtro-mes').value);
   const pend = tx.filter(t => t.status === 'Planejado').sort((a, b) => a.data.localeCompare(b.data));
   $('lista-pendentes').innerHTML = pend.length ? pend.map(linhaPend).join('') : '<div class="p-4 text-center text-xs text-slate-400">Tudo em dia! Sem pendências.</div>';
-  const mes = tx.filter(t => t.aba === aba).sort((a, b) => b.data.localeCompare(a.data));
+  const mes = ordenarMes(tx.filter(t => t.aba === aba));
   $('lista-transacoes').innerHTML = mes.length ? mes.map(linhaCons).join('') : '<div class="p-6 text-center text-slate-400 text-sm">Nenhum registro no mês. Toque na nuvem para sincronizar.</div>';
   $('total-registros').textContent = `${mes.length} reg.`;
+  $('lista-desejos').innerHTML = desejos.length ? desejos.map(linhaDesejo).join('') : '<div class="p-6 text-center text-slate-400 text-xs">Nenhum desejo cadastrado ainda.</div>';
+  $('total-desejos').textContent = `${desejos.length} ${desejos.length === 1 ? 'item' : 'itens'}`;
   const soma = (tp, st) => r2(mes.filter(t => t.tipo === tp && t.status === st).reduce((a, t) => a + t.valor, 0));
   const re = soma('Receita', 'Executado'), rp = soma('Receita', 'Planejado'), de = soma('Despesa', 'Executado'), dp = soma('Despesa', 'Planejado');
   $('card-saldo').textContent = brl(r2(re - de)); $('card-receitas').textContent = brl(re); $('card-despesas').textContent = brl(de);
@@ -419,7 +586,7 @@ function graficos(mes, re, rp, de, dp) {
 
 // ---------- navegação e tema ----------
 function mudarAba(a) {
-  ['executar', 'planejar', 'dashboard', 'consultas'].forEach(x => {
+  ['executar', 'planejar', 'desejos', 'dashboard', 'consultas'].forEach(x => {
     $('view-' + x).classList.toggle('hidden', x !== a);
     $('tab-btn-' + x).className = 'flex flex-col items-center space-y-1 transition ' + (x === a ? 'text-emerald-600 font-bold' : 'text-slate-400');
   });
@@ -438,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('cats-exec').innerHTML = blocoCat('exec', 'text-emerald-600 dark:text-emerald-400');
   $('cats-plan').innerHTML = blocoCat('plan', 'text-amber-600 dark:text-amber-400');
   ['exec-pagamento', 'plan-pagamento'].forEach(id => $(id).innerHTML = opts(PAG));
-  migrar(); setTipo('Despesa', 'exec'); setTipo('Despesa', 'plan'); mudarAba('executar'); render(); sincronizar();
+  migrar(); setTipo('Despesa', 'exec'); setTipo('Despesa', 'plan'); refreshCatsDesejo(); mudarAba('executar'); render(); sincronizar();
 });
 window.addEventListener('online', sincronizar);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) enviar(); });
