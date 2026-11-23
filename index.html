@@ -210,6 +210,7 @@ const LS = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); retu
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r2 = v => Math.round(v * 100) / 100;
 const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const ordAz = a => [...a].sort((x, y) => String(x).localeCompare(String(y), 'pt-BR', { sensitivity: 'base' }));
 const hojeLocal = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
 const abaDe = iso => MES[+iso.slice(5, 7) - 1] + ' ' + iso.slice(0, 4);
 const desloca = (ym, n) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
@@ -252,7 +253,11 @@ function dialogo({ titulo, msg = '', campos = [], ok = 'OK', nao = 'Cancelar' })
   return new Promise(res => {
     $('dlg-titulo').textContent = titulo; $('dlg-msg').textContent = msg;
     $('dlg-campos').innerHTML = campos.map(c => c.options
-      ? `<select id="dlg-${c.id}" class="inp">${c.options.map(o => `<option value="${esc(o)}"${o === c.value ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+      ? `<select id="dlg-${c.id}" class="inp">${c.options.map(o => {
+          const val = typeof o === 'object' ? o.v : o;
+          const lbl = typeof o === 'object' ? o.l : o;
+          return `<option value="${esc(val)}"${String(val) === String(c.value) ? ' selected' : ''}>${esc(lbl)}</option>`;
+        }).join('')}</select>`
       : `<input id="dlg-${c.id}" type="${c.type || 'text'}" value="${esc(c.value || '')}" placeholder="${esc(c.ph || '')}" class="inp">`
     ).join('');
     $('dlg-ok').textContent = ok; $('dlg-cancel').textContent = nao;
@@ -373,24 +378,24 @@ function blocoCat(p, cor) {
 const opts = a => a.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
 function refreshCats(p, sel) {
   const s = $(p + '-categoria'), antes = sel || s.value;
-  s.innerHTML = opts(Object.keys(cat[tipo[p]]));
+  s.innerHTML = opts(ordAz(Object.keys(cat[tipo[p]])));
   if (antes && cat[tipo[p]][antes]) s.value = antes;
   refreshSubs(p);
 }
 function refreshSubs(p, sel) {
   const s = $(p + '-subcategoria'), antes = sel || s.value;
-  s.innerHTML = opts(cat[tipo[p]][$(p + '-categoria').value] || []);
+  s.innerHTML = opts(ordAz(cat[tipo[p]][$(p + '-categoria').value] || []));
   if (antes) s.value = antes;
 }
 function refreshCatsDesejo() {
   const s = $('des-categoria'), antes = s.value;
-  s.innerHTML = opts(Object.keys(cat.Despesa));
+  s.innerHTML = opts(ordAz(Object.keys(cat.Despesa)));
   if (antes && cat.Despesa[antes]) s.value = antes;
   refreshSubsDesejo();
 }
 function refreshSubsDesejo() {
   const s = $('des-subcategoria');
-  s.innerHTML = opts(cat.Despesa[$('des-categoria').value] || []);
+  s.innerHTML = opts(ordAz(cat.Despesa[$('des-categoria').value] || []));
 }
 async function novoItem(kind, p) {
   const r = await dialogo({ titulo: kind === 'categoria' ? 'Nova categoria' : 'Nova subcategoria', campos: [{ id: 'n', ph: 'Nome' }], ok: 'Adicionar' });
@@ -401,32 +406,68 @@ async function novoItem(kind, p) {
   if (kind === 'categoria') {
     cat[tp][nome] = cat[tp][nome] || [];
     enfileira({ acao: 'config_add', tipo: tp, categoria: nome });
-    refreshCats(p, nome); refreshCatsDesejo();
+    refreshCats('exec', p === 'exec' ? nome : undefined);
+    refreshCats('plan', p === 'plan' ? nome : undefined);
+    refreshCatsDesejo();
   } else {
     const c = $(p + '-categoria').value;
     if (!c) return aviso('Escolha uma categoria antes');
     if (!cat[tp][c].includes(nome)) cat[tp][c].push(nome);
     enfileira({ acao: 'config_add', tipo: tp, categoria: c, subcategoria: nome });
-    refreshSubs(p, nome); refreshSubsDesejo();
+    refreshSubs('exec', p === 'exec' ? nome : undefined);
+    refreshSubs('plan', p === 'plan' ? nome : undefined);
+    refreshSubsDesejo();
   }
   salvar();
 }
 function formatarMoeda(i) { i.value = (parseInt(i.value.replace(/\D/g, '') || '0', 10) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
 const lerValor = id => parseInt($(id).value.replace(/\D/g, '') || '0', 10) / 100;
 
-function salvarTransacao(e, p) {
+async function salvarTransacao(e, p) {
   e.preventDefault();
   const valor = lerValor(p + '-valor'), dataBase = $(p + '-data').value;
   if (!(valor > 0)) return aviso('Informe um valor válido.');
   if (!RE_DATA.test(dataBase)) return aviso('Data inválida.');
   const rep = p === 'plan' ? Math.max(1, Math.min(24, parseInt($('plan-repetir').value, 10) || 1)) : 1;
   const descBase = $(p + '-descricao').value.trim();
+  const categoria = $(p + '-categoria').value || 'Outros';
+  const subcategoria = $(p + '-subcategoria').value;
+  const pagamento = $(p + '-pagamento').value;
+
+  // Dedução automática de planejado na mesma categoria e mês (aba Executar)
+  if (p === 'exec') {
+    const aba = abaDe(dataBase);
+    const pends = tx.filter(x => x.status === 'Planejado' && x.aba === aba && x.tipo === tipo.exec && x.categoria === categoria);
+    if (pends.length) {
+      const r = await dialogo({
+        titulo: 'Deduzir do planejado?',
+        msg: `Existe planejamento em "${categoria}" (${aba}). Deseja abater ${brl(valor)}?`,
+        campos: [{ id: 'pid', value: pends[0].id, options: pends.map(x => ({ v: x.id, l: `${x.descricao} — ${brl(x.valor)}` })) }],
+        ok: 'Deduzir',
+        nao: 'Não deduzir'
+      });
+      if (r && r.pid) {
+        const alvo = tx.find(x => String(x.id) === String(r.pid));
+        if (alvo) {
+          const resto = r2(alvo.valor - valor);
+          if (resto > 0) {
+            alvo.valor = resto;
+            enfileira({ acao: 'status', id: alvo.id, aba: alvo.aba, status: 'Planejado', valor: resto, data: alvo.data });
+          } else {
+            tx = tx.filter(x => x !== alvo);
+            enfileira({ acao: 'excluir', id: alvo.id, aba: alvo.aba });
+          }
+        }
+      }
+    }
+  }
+
   const novos = [];
   for (let i = 0; i < rep; i++) {
     const data = i === 0 ? dataBase : somaMeses(dataBase, i);
     const t = {
       id: novoId(), tipo: tipo[p], status: p === 'exec' ? 'Executado' : 'Planejado', data, aba: abaDe(data),
-      categoria: $(p + '-categoria').value || 'Outros', subcategoria: $(p + '-subcategoria').value, pagamento: $(p + '-pagamento').value,
+      categoria, subcategoria, pagamento,
       descricao: rep > 1 ? `${descBase} (${i + 1}/${rep})` : descBase, valor
     };
     tx.push(t); novos.push(t);
