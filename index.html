@@ -124,7 +124,7 @@
   <section id="view-dashboard" class="space-y-4 hidden">
     <div class="card p-3 flex items-center justify-between">
       <span class="text-xs font-semibold uppercase text-slate-400 ml-1">Mês de referência:</span>
-      <input type="month" id="filtro-mes" onchange="sincronizar()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium outline-none">
+      <input type="month" id="filtro-mes" onchange="drill={cat:null,sub:null};sincronizar()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm font-medium outline-none">
     </div>
     <div class="card p-4 flex justify-between items-center">
       <div><p class="text-xs font-medium text-slate-400">Saldo no mês (executado)</p><h3 id="card-saldo" class="text-xl font-bold mt-0.5">R$ 0,00</h3></div>
@@ -139,8 +139,14 @@
       <div class="relative h-56"><canvas id="concentricChart"></canvas></div>
     </div>
     <div class="card p-4">
-      <h3 class="text-sm font-semibold mb-3">Gastos por categoria</h3>
-      <div class="relative h-64"><canvas id="catChart"></canvas></div>
+      <div class="flex justify-between items-center mb-3 gap-2">
+        <h3 id="cat-titulo" class="text-sm font-semibold truncate">Gastos por categoria</h3>
+        <button id="cat-voltar" onclick="voltarCat()" class="hidden text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">
+          <i class="fa-solid fa-arrow-left mr-1"></i>Voltar
+        </button>
+      </div>
+      <div id="cat-chart-wrap" class="relative h-64"><canvas id="catChart"></canvas></div>
+      <div id="cat-detalhes" class="hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto"></div>
     </div>
   </section>
 
@@ -226,6 +232,8 @@ let desejos = LS('fin2_desejos', []);
 let token = localStorage.getItem('fin_token') || '';
 let tipo = { exec: 'Despesa', plan: 'Despesa' };
 let charts = {};
+let drill = { cat: null, sub: null };
+let mesChart = [];
 const salvar = () => {
   localStorage.setItem('fin2_cat', JSON.stringify(cat));
   localStorage.setItem('fin2_tx', JSON.stringify(tx));
@@ -566,7 +574,88 @@ function render() {
   $('card-saldo').textContent = brl(r2(re - de)); $('card-receitas').textContent = brl(re); $('card-despesas').textContent = brl(de);
   graficos(mes, re, rp, de, dp);
 }
+
+function voltarCat() {
+  if (drill.sub) drill.sub = null;
+  else drill.cat = null;
+  renderCatChart();
+}
+
+function renderCatChart() {
+  const wrap = $('cat-chart-wrap'), det = $('cat-detalhes'), btn = $('cat-voltar'), tit = $('cat-titulo');
+  const desp = mesChart.filter(t => t.tipo === 'Despesa' && t.status === 'Executado');
+  btn.classList.toggle('hidden', !drill.cat);
+
+  if (drill.cat && drill.sub) {
+    tit.textContent = `${drill.cat} › ${drill.sub}`;
+    wrap.classList.add('hidden');
+    det.classList.remove('hidden');
+    const itens = desp
+      .filter(t => t.categoria === drill.cat && (t.subcategoria || 'Sem subcategoria') === drill.sub)
+      .sort((a, b) => b.valor - a.valor);
+    det.innerHTML = itens.length
+      ? itens.map(t => `<div class="py-2.5 flex justify-between items-center gap-2">
+          <div class="min-w-0">
+            <p class="text-xs font-medium truncate">${esc(t.descricao)}</p>
+            <p class="text-[10px] text-slate-400">${fdata(t.data)} · ${esc(t.pagamento)}</p>
+          </div>
+          <span class="text-xs font-bold text-rose-500 shrink-0">${brl(t.valor)}</span>
+        </div>`).join('')
+      : '<div class="py-6 text-center text-xs text-slate-400">Nenhum lançamento encontrado.</div>';
+    return;
+  }
+
+  wrap.classList.remove('hidden');
+  det.classList.add('hidden');
+  const mapa = {};
+  if (!drill.cat) {
+    tit.textContent = 'Gastos por categoria';
+    desp.forEach(t => mapa[t.categoria] = r2((mapa[t.categoria] || 0) + t.valor));
+  } else {
+    tit.textContent = `${drill.cat} (por subcategoria)`;
+    desp.filter(t => t.categoria === drill.cat).forEach(t => {
+      const sub = t.subcategoria || 'Sem subcategoria';
+      mapa[sub] = r2((mapa[sub] || 0) + t.valor);
+    });
+  }
+
+  const entries = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
+  const labels = entries.map(e => e[0]);
+  const values = entries.map(e => e[1]);
+
+  if (charts.b) charts.b.destroy();
+  charts.b = new Chart($('catChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      onClick: (_, els) => {
+        if (!els.length) return;
+        const clicado = labels[els[0].index];
+        if (!drill.cat) drill.cat = clicado;
+        else drill.sub = clicado;
+        renderCatChart();
+      },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(148,163,184,.15)' }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
 function graficos(mes, re, rp, de, dp) {
+  mesChart = mes;
   const b = $('badge-cenario'); let o, oc, i, ic;
   if (re + rp >= de + dp) {
     b.textContent = 'SUPERÁVIT'; b.className = 'text-[10px] px-2 rounded-full font-bold bg-emerald-100 text-emerald-700';
@@ -576,12 +665,13 @@ function graficos(mes, re, rp, de, dp) {
     o = [de, dp]; oc = ['#f43f5e', '#fb7185']; i = [re, rp, r2(de + dp - re - rp)]; ic = ['#10b981', '#34d399', '#f59e0b'];
   }
   Chart.defaults.color = '#94a3b8';
-  Object.values(charts).forEach(c => c.destroy());
-  charts.a = new Chart($('concentricChart'), { type: 'doughnut', data: { datasets: [{ data: o, backgroundColor: oc, borderWidth: 0 }, { data: i, backgroundColor: ic, borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
-  const dc = {};
-  mes.filter(t => t.tipo === 'Despesa' && t.status === 'Executado').forEach(t => dc[t.categoria] = r2((dc[t.categoria] || 0) + t.valor));
-  charts.b = new Chart($('catChart'), { type: 'bar', data: { labels: Object.keys(dc), datasets: [{ data: Object.values(dc), backgroundColor: ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'], borderRadius: 6 }] },
-    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(148,163,184,.15)' }, ticks: { font: { size: 10 } } }, y: { grid: { display: false }, ticks: { font: { size: 10 } } } } } });
+  if (charts.a) charts.a.destroy();
+  charts.a = new Chart($('concentricChart'), {
+    type: 'doughnut',
+    data: { datasets: [{ data: o, backgroundColor: oc, borderWidth: 0 }, { data: i, backgroundColor: ic, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+  renderCatChart();
 }
 
 // ---------- navegação e tema ----------
