@@ -34,6 +34,7 @@
     </div>
     <div class="flex items-center space-x-2">
       <button onclick="sincronizar()" class="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" title="Sincronizar"><i class="fa-solid fa-cloud-arrow-down text-sm"></i></button>
+      <button onclick="configurarAcesso()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300" title="Configurar conexão"><i class="fa-solid fa-gear text-sm"></i></button>
       <button onclick="alternarTema()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800"><i id="theme-icon" class="fa-solid fa-moon text-sm"></i></button>
     </div>
   </div>
@@ -195,7 +196,6 @@
 </nav>
 
 <script>
-const URL_API = "https://script.google.com/macros/s/AKfycbxrQLNpg8kh9DX-IOdG6JbCnyFvaarsM6YuQc5agDyQnVEbb_FpQJGOg6lxXY3SYF4u/exec";
 const MES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const PAG = ['Pix','Cartão de Crédito','Cartão de Débito','Dinheiro','Boleto','Desconto em Folha'];
 const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
@@ -230,6 +230,7 @@ let cat = LS('fin2_cat', null) || structuredClone(DEF);
 let tx = LS('fin2_tx', []);
 let out = LS('fin2_out', []);
 let desejos = LS('fin2_desejos', []);
+let urlApi = localStorage.getItem('fin_url') || '';
 let token = localStorage.getItem('fin_token') || '';
 let tipo = { exec: 'Despesa', plan: 'Despesa' };
 let charts = {};
@@ -269,27 +270,44 @@ function dialogo({ titulo, msg = '', campos = [], ok = 'OK', nao = 'Cancelar' })
   });
 }
 
-// ---------- rede ----------
+// ---------- rede e acesso ----------
 let pedindo = null;
-function garantirToken() {
-  if (token) return Promise.resolve(true);
+function pedirAcesso(forcar = false) {
+  if (!forcar && urlApi && token) return Promise.resolve(true);
   if (pedindo) return pedindo;
-  pedindo = dialogo({ titulo: 'Código de acesso', msg: 'Digite o token configurado no Apps Script (uma vez por aparelho).', campos: [{ id: 't', type: 'password', ph: 'Token' }], ok: 'Entrar' })
-    .then(r => { if (!r || !r.t.trim()) return false; token = r.t.trim(); localStorage.setItem('fin_token', token); return true; })
-    .finally(() => { pedindo = null; });
+  pedindo = dialogo({
+    titulo: 'Conectar à Planilha',
+    msg: 'Informe a URL do seu Apps Script e o Token configurado (salvo apenas neste aparelho).',
+    campos: [
+      { id: 'u', type: 'url', value: urlApi, ph: 'https://script.google.com/macros/s/.../exec' },
+      { id: 't', type: 'password', value: token, ph: 'Token de acesso' }
+    ],
+    ok: 'Entrar'
+  }).then(r => {
+    if (!r) return false;
+    const u = r.u.trim(), t = r.t.trim();
+    if (!u.startsWith('https://script.google.com/macros/s/') || !t) { aviso('URL ou Token inválido'); return false; }
+    urlApi = u; token = t;
+    localStorage.setItem('fin_url', urlApi);
+    localStorage.setItem('fin_token', token);
+    return true;
+  }).finally(() => { pedindo = null; });
   return pedindo;
 }
+async function configurarAcesso() {
+  if (await pedirAcesso(true)) sincronizar();
+}
 async function api(params, body) {
-  if (body) return (await fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, token }) })).json();
-  const u = new URL(URL_API);
+  if (body) return (await fetch(urlApi, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...body, token }) })).json();
+  const u = new URL(urlApi);
   Object.entries({ ...params, token }).forEach(([k, v]) => u.searchParams.set(k, v));
   return (await fetch(u)).json();
 }
-function tokenInvalido() { token = ''; localStorage.removeItem('fin_token'); aviso('Token inválido — tente de novo'); }
+function tokenInvalido() { token = ''; localStorage.removeItem('fin_token'); aviso('Token inválido — toque na engrenagem'); }
 
 let enviando = false;
 async function enviar() {
-  if (enviando || !out.length || !navigator.onLine || !(await garantirToken())) return;
+  if (enviando || !out.length || !navigator.onLine || !(await pedirAcesso())) return;
   enviando = true; aviso('A enviar...', 0);
   try {
     while (out.length) {
@@ -314,7 +332,7 @@ function registrarCat(t) {
 
 async function sincronizar() {
   const f = $('filtro-mes').value; render();
-  if (!navigator.onLine || !(await garantirToken())) return;
+  if (!navigator.onLine || !(await pedirAcesso())) return;
   aviso('A sincronizar...', 0);
   try {
     await enviar();
@@ -434,7 +452,6 @@ async function salvarTransacao(e, p) {
   const subcategoria = $(p + '-subcategoria').value;
   const pagamento = $(p + '-pagamento').value;
 
-  // Dedução automática de planejado na mesma categoria e mês (aba Executar)
   if (p === 'exec') {
     const aba = abaDe(dataBase);
     const pends = tx.filter(x => x.status === 'Planejado' && x.aba === aba && x.tipo === tipo.exec && x.categoria === categoria);
