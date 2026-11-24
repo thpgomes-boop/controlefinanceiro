@@ -28,8 +28,11 @@
     <div class="flex items-center space-x-2.5">
       <div class="bg-emerald-500 text-white p-2 rounded-xl shadow"><i class="fa-solid fa-wallet text-base"></i></div>
       <div>
-        <h1 class="text-base font-bold tracking-tight">Finanças Família</h1>
-        <span id="sync-status" class="text-[10px] text-amber-500 font-medium hidden"></span>
+        <h1 class="text-base font-bold tracking-tight leading-tight">Finanças Família</h1>
+        <div class="flex items-center space-x-2">
+          <span class="text-[10px] text-slate-400 font-medium">v2.4 · 24/11/2026</span>
+          <span id="sync-status" class="text-[10px] text-amber-500 font-medium hidden"></span>
+        </div>
       </div>
     </div>
     <div class="flex items-center space-x-2">
@@ -140,11 +143,15 @@
       <div class="relative h-56"><canvas id="concentricChart"></canvas></div>
     </div>
     <div class="card p-4">
-      <div class="flex justify-between items-center mb-3 gap-2">
+      <div class="flex justify-between items-center mb-2 gap-2">
         <h3 id="cat-titulo" class="text-sm font-semibold truncate">Gastos por categoria</h3>
         <button id="cat-voltar" onclick="voltarCat()" class="hidden text-[11px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">
           <i class="fa-solid fa-arrow-left mr-1"></i>Voltar
         </button>
+      </div>
+      <div id="cat-legenda" class="flex items-center space-x-3 mb-2 text-[10px] text-slate-400">
+        <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500"></span>Executado</span>
+        <span class="flex items-center gap-1"><span class="inline-block w-2.5 h-2.5 rounded-sm bg-rose-500/30"></span>Planejado</span>
       </div>
       <div id="cat-chart-wrap" class="relative h-64"><canvas id="catChart"></canvas></div>
       <div id="cat-detalhes" class="hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto"></div>
@@ -198,6 +205,7 @@
 <script>
 const MES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const PAG = ['Pix','Cartão de Crédito','Cartão de Débito','Dinheiro','Boleto','Desconto em Folha'];
+const CORES = ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 const RE_DATA = /^\d{4}-\d{2}-\d{2}$/;
 const DEF = {
   Receita: { "Salário": ["Salário Mensal"], "Investimentos": ["Dividendos"] },
@@ -640,57 +648,101 @@ function voltarCat() {
 }
 
 function renderCatChart() {
-  const wrap = $('cat-chart-wrap'), det = $('cat-detalhes'), btn = $('cat-voltar'), tit = $('cat-titulo');
-  const desp = mesChart.filter(t => t.tipo === 'Despesa' && t.status === 'Executado');
+  const wrap = $('cat-chart-wrap'), det = $('cat-detalhes'), btn = $('cat-voltar'), tit = $('cat-titulo'), leg = $('cat-legenda');
+  const desp = mesChart.filter(t => t.tipo === 'Despesa');
   btn.classList.toggle('hidden', !drill.cat);
 
+  // Nível 3: Lista de lançamentos (da subcategoria ou da categoria inteira)
   if (drill.cat && drill.sub) {
-    tit.textContent = `${drill.cat} › ${drill.sub}`;
+    const todos = drill.sub === '__ALL__';
+    tit.textContent = todos ? `${drill.cat} › Todos` : `${drill.cat} › ${drill.sub}`;
     wrap.classList.add('hidden');
+    leg.classList.add('hidden');
     det.classList.remove('hidden');
     const itens = desp
-      .filter(t => t.categoria === drill.cat && (t.subcategoria || 'Sem subcategoria') === drill.sub)
-      .sort((a, b) => b.valor - a.valor);
+      .filter(t => t.categoria === drill.cat && (todos || (t.subcategoria || 'Sem subcategoria') === drill.sub))
+      .sort((a, b) => (a.status === 'Executado' ? 0 : 1) - (b.status === 'Executado' ? 0 : 1) || b.valor - a.valor);
     det.innerHTML = itens.length
-      ? itens.map(t => `<div class="py-2.5 flex justify-between items-center gap-2">
-          <div class="min-w-0">
-            <p class="text-xs font-medium truncate">${esc(t.descricao)}</p>
-            <p class="text-[10px] text-slate-400">${fdata(t.data)} · ${esc(t.pagamento)}</p>
-          </div>
-          <span class="text-xs font-bold text-rose-500 shrink-0">${brl(t.valor)}</span>
-        </div>`).join('')
+      ? itens.map(t => {
+          const pl = t.status === 'Planejado';
+          return `<div class="py-2.5 flex justify-between items-center gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <p class="text-xs font-medium truncate">${esc(t.descricao)}</p>
+                <span class="text-[9px] px-1 rounded shrink-0 ${pl ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">${t.status}</span>
+              </div>
+              <p class="text-[10px] text-slate-400">${fdata(t.data)} · ${esc(t.pagamento)}${todos && t.subcategoria ? ' · ' + esc(t.subcategoria) : ''}</p>
+            </div>
+            <span class="text-xs font-bold ${pl ? 'text-amber-500' : 'text-rose-500'} shrink-0">${brl(t.valor)}</span>
+          </div>`;
+        }).join('')
       : '<div class="py-6 text-center text-xs text-slate-400">Nenhum lançamento encontrado.</div>';
     return;
   }
 
+  // Níveis 1 e 2: Gráfico de barras sobrepostas (Executado sólido + Planejado esmaecido)
   wrap.classList.remove('hidden');
+  leg.classList.remove('hidden');
   det.classList.add('hidden');
-  const mapa = {};
+
+  const somar = (lista, chaveFn) => {
+    const m = {};
+    lista.forEach(t => {
+      const k = chaveFn(t);
+      if (!m[k]) m[k] = { exec: 0, plan: 0 };
+      if (t.status === 'Executado') m[k].exec = r2(m[k].exec + t.valor);
+      else m[k].plan = r2(m[k].plan + t.valor);
+    });
+    return Object.entries(m)
+      .map(([k, v]) => ({ key: k, label: k, exec: v.exec, plan: v.plan, total: r2(v.exec + v.plan) }))
+      .sort((a, b) => b.total - a.total);
+  };
+
+  let linhas = [];
   if (!drill.cat) {
     tit.textContent = 'Gastos por categoria';
-    desp.forEach(t => mapa[t.categoria] = r2((mapa[t.categoria] || 0) + t.valor));
+    linhas = somar(desp, t => t.categoria);
   } else {
     tit.textContent = `${drill.cat} (por subcategoria)`;
-    desp.filter(t => t.categoria === drill.cat).forEach(t => {
-      const sub = t.subcategoria || 'Sem subcategoria';
-      mapa[sub] = r2((mapa[sub] || 0) + t.valor);
-    });
+    const daCat = desp.filter(t => t.categoria === drill.cat);
+    const totExec = r2(daCat.filter(t => t.status === 'Executado').reduce((a, t) => a + t.valor, 0));
+    const totPlan = r2(daCat.filter(t => t.status === 'Planejado').reduce((a, t) => a + t.valor, 0));
+    const subs = somar(daCat, t => t.subcategoria || 'Sem subcategoria');
+    linhas = [{ key: '__ALL__', label: `Total · ${drill.cat}`, exec: totExec, plan: totPlan, total: r2(totExec + totPlan), isTotal: true }, ...subs];
   }
 
-  const entries = Object.entries(mapa).sort((a, b) => b[1] - a[1]);
-  const labels = entries.map(e => e[0]);
-  const values = entries.map(e => e[1]);
+  wrap.style.height = Math.max(220, linhas.length * 32) + 'px';
+
+  const labels = linhas.map(l => l.label);
+  const valsExec = linhas.map(l => l.exec);
+  const valsPlan = linhas.map(l => l.plan);
+  const valsTotal = linhas.map(l => l.total);
+  const coresSolidas = linhas.map((l, idx) => l.isTotal ? '#64748b' : CORES[(drill.cat ? idx - 1 : idx) % CORES.length]);
+  const coresEsmaecidas = coresSolidas.map(c => c + '40');
 
   if (charts.b) charts.b.destroy();
   charts.b = new Chart($('catChart'), {
     type: 'bar',
     data: {
       labels,
-      datasets: [{
-        data: values,
-        backgroundColor: ['#f43f5e', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],
-        borderRadius: 6
-      }]
+      datasets: [
+        {
+          label: 'Executado',
+          data: valsExec,
+          backgroundColor: coresSolidas,
+          borderRadius: 6,
+          grouped: false,
+          order: 1
+        },
+        {
+          label: 'Planejado',
+          data: valsTotal,
+          backgroundColor: coresEsmaecidas,
+          borderRadius: 6,
+          grouped: false,
+          order: 2
+        }
+      ]
     },
     options: {
       responsive: true,
@@ -698,15 +750,28 @@ function renderCatChart() {
       indexAxis: 'y',
       onClick: (_, els) => {
         if (!els.length) return;
-        const clicado = labels[els[0].index];
-        if (!drill.cat) drill.cat = clicado;
-        else drill.sub = clicado;
+        const item = linhas[els[0].index];
+        if (!drill.cat) drill.cat = item.key;
+        else drill.sub = item.key;
         renderCatChart();
       },
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: ctx => {
+              const i = ctx.dataIndex;
+              if (ctx.datasetIndex === 0) return ` Executado: ${brl(valsExec[i])}`;
+              return ` Planejado restante: ${brl(valsPlan[i])} (Total: ${brl(valsTotal[i])})`;
+            }
+          }
+        }
+      },
       scales: {
-        x: { grid: { color: 'rgba(148,163,184,.15)' }, ticks: { font: { size: 10 } } },
-        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        x: { stacked: false, grid: { color: 'rgba(148,163,184,.15)' }, ticks: { font: { size: 10 } } },
+        y: { stacked: false, grid: { display: false }, ticks: { font: { size: 10 } } }
       }
     }
   });
