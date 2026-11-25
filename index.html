@@ -30,7 +30,7 @@
       <div>
         <h1 class="text-base font-bold tracking-tight leading-tight">Finanças Família</h1>
         <div class="flex items-center space-x-2">
-          <span class="text-[10px] text-slate-400 font-medium">v2.4 · 24/11/2026</span>
+          <span class="text-[10px] text-slate-400 font-medium">v2.6 · 25/11/2026</span>
           <span id="sync-status" class="text-[10px] text-amber-500 font-medium hidden"></span>
         </div>
       </div>
@@ -106,19 +106,26 @@
         <input type="text" id="des-nome" placeholder="O que queremos comprar ou fazer?" required maxlength="120" class="inp">
         <div class="flex space-x-2">
           <div class="w-1/2"><label class="lbl">Valor estimado</label><input type="text" inputmode="numeric" id="des-valor" placeholder="R$ 0,00" required oninput="formatarMoeda(this)" class="inp !text-base font-bold text-violet-500"></div>
-          <div class="w-1/2"><label class="lbl">Link de referência</label><input type="url" id="des-link" placeholder="https://..." class="inp"></div>
+          <div class="w-1/2"><label class="lbl">Link (opcional)</label><input type="url" id="des-link" placeholder="https://..." class="inp"></div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <select id="des-categoria" onchange="refreshSubsDesejo()" class="sel"></select>
           <select id="des-subcategoria" class="sel"></select>
         </div>
-        <button type="submit" class="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center space-x-2"><i class="fa-solid fa-plus"></i><span>Adicionar à lista</span></button>
+        <button type="submit" class="w-full py-2.5 bg-violet-600 hover:bg-violet-700 text-white font-semibold rounded-xl shadow-lg flex items-center justify-center space-x-2"><i class="fa-solid fa-plus"></i><span>Adicionar à fila</span></button>
       </form>
     </div>
     <div class="card overflow-hidden">
-      <div class="p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-        <h3 class="text-xs font-bold text-violet-600 dark:text-violet-400">Lista de Desejos</h3>
-        <span id="total-desejos" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 itens</span>
+      <div class="p-3 border-b border-slate-200 dark:border-slate-700 space-y-2">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold text-violet-600 dark:text-violet-400">Ranking de Desejos</h3>
+          <span id="total-desejos" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 font-medium">0 itens</span>
+        </div>
+        <select id="ordem-desejos" onchange="render()" class="sel">
+          <option value="prio">Ordenar: Prioridade (1º, 2º, 3º...)</option>
+          <option value="valor-asc">Ordenar: Menor preço</option>
+          <option value="valor-desc">Ordenar: Maior preço</option>
+        </select>
       </div>
       <div id="lista-desejos" class="divide-y divide-slate-100 dark:divide-slate-800 max-h-[55vh] overflow-y-auto"></div>
     </div>
@@ -251,6 +258,18 @@ const salvar = () => {
   localStorage.setItem('fin2_desejos', JSON.stringify(desejos));
 };
 
+function normalizarPrioridades() {
+  const legado = { 'Alta': 1000, 'Média': 2000, 'Baixa': 3000 };
+  desejos.sort((a, b) => {
+    const pa = parseInt(a.prioridade, 10);
+    const pb = parseInt(b.prioridade, 10);
+    const va = isFinite(pa) && pa > 0 ? pa : (legado[a.prioridade] || 2000);
+    const vb = isFinite(pb) && pb > 0 ? pb : (legado[b.prioridade] || 2000);
+    return va - vb;
+  });
+  desejos.forEach((d, i) => d.prioridade = i + 1);
+}
+
 let tAviso;
 function aviso(txt, ms = 3000) {
   const el = $('sync-status'); el.textContent = txt; el.classList.remove('hidden');
@@ -358,6 +377,7 @@ async function sincronizar() {
       desejos = desejos.filter(d => pend.has(String(d.id)));
       const dIds = new Set(desejos.map(d => String(d.id)));
       des.forEach(d => { if (!dIds.has(String(d.id))) desejos.push(d); });
+      normalizarPrioridades();
     }
     ['Receita', 'Despesa'].forEach(tp => Object.entries((cfg && cfg[tp]) || {}).forEach(([c, subs]) => {
       cat[tp][c] = cat[tp][c] || [];
@@ -504,21 +524,35 @@ async function salvarTransacao(e, p) {
   if (p === 'plan') mudarAba('executar');
 }
 
-// ---------- desejos ----------
+// ---------- desejos (ranking único 1..N) ----------
 function salvarDesejo(e) {
   e.preventDefault();
   const valor = lerValor('des-valor'), nome = $('des-nome').value.trim();
   if (!(valor > 0)) return aviso('Informe um valor estimado.');
   if (!nome) return aviso('Informe o nome.');
+  normalizarPrioridades();
   const d = {
     id: novoId(), nome, valor, link: $('des-link').value.trim(),
     categoria: $('des-categoria').value || 'Outros', subcategoria: $('des-subcategoria').value || '',
+    prioridade: desejos.length + 1,
     status: 'Na lista', abaPlanejada: '', txId: ''
   };
   desejos.push(d);
   $('des-nome').value = ''; $('des-valor').value = ''; $('des-link').value = '';
   salvar(); render();
   enfileira({ acao: 'desejo_add', ...d });
+}
+
+function moverDesejo(id, dir) {
+  normalizarPrioridades();
+  const idx = desejos.findIndex(x => String(x.id) === String(id));
+  const alvo = idx + dir;
+  if (idx < 0 || alvo < 0 || alvo >= desejos.length) return;
+  [desejos[idx], desejos[alvo]] = [desejos[alvo], desejos[idx]];
+  desejos.forEach((d, i) => d.prioridade = i + 1);
+  salvar(); render();
+  out = out.filter(o => o.acao !== 'desejo_reordenar');
+  enfileira({ acao: 'desejo_reordenar', ids: desejos.map(d => d.id) });
 }
 
 async function planejarDesejo(id) {
@@ -559,6 +593,7 @@ async function excluirDesejo(id) {
   const d = desejos.find(x => String(x.id) === String(id)); if (!d) return;
   if (!(await dialogo({ titulo: 'Excluir desejo?', msg: d.nome, ok: 'Excluir' }))) return;
   desejos = desejos.filter(x => x !== d);
+  normalizarPrioridades();
   salvar(); render();
   enfileira({ acao: 'desejo_del', id: d.id });
 }
@@ -603,15 +638,23 @@ document.addEventListener('click', e => {
   else if (a === 'des-plan') planejarDesejo(id);
   else if (a === 'des-dev') devolverDesejo(id);
   else if (a === 'des-del') excluirDesejo(id);
+  else if (a === 'des-up') moverDesejo(id, -1);
+  else if (a === 'des-down') moverDesejo(id, 1);
 });
 
 // ---------- renderização ----------
 const linhaPend = t => `<div class="p-3 flex justify-between items-center"><div class="flex-1 min-w-0 pr-2 space-y-0.5"><p class="text-xs font-bold ${t.tipo === 'Receita' ? 'text-emerald-600' : ''}">${esc(t.categoria)} <span class="font-normal text-[10px] text-slate-400">- ${fdata(t.data)}</span></p><p class="text-[10px] text-slate-500 truncate">${esc(t.descricao)}</p><p class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-rose-500'}">${brl(t.valor)}</p></div><button data-act="ok" data-id="${esc(t.id)}" class="h-10 w-10 bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 rounded-full flex items-center justify-center shadow active:scale-95"><i class="fa-solid fa-check"></i></button></div>`;
 const linhaCons = t => { const pl = t.status === 'Planejado'; return `<div class="p-3.5 flex justify-between items-center"><div class="space-y-0.5 min-w-0"><div class="flex items-center space-x-2"><span class="text-xs font-semibold ${t.tipo === 'Receita' ? 'text-emerald-500' : 'text-rose-500'}">${esc(t.categoria)}</span><span class="text-[9px] px-1 rounded ${pl ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}">${t.status}</span><span class="text-[10px] text-slate-400">${fdata(t.data)}</span></div><p class="text-[11px] text-slate-500 truncate">${esc(t.descricao)}</p></div><div class="flex items-center space-x-2 shrink-0"><span class="text-sm font-bold">${brl(t.valor)}</span><div class="flex items-center border-l pl-2 ml-2 dark:border-slate-700"><button data-act="ok" data-id="${esc(t.id)}" class="${pl ? 'text-emerald-500' : 'text-amber-500'} p-1 mr-1"><i class="fa-solid ${pl ? 'fa-check-circle' : 'fa-clock-rotate-left'}"></i></button><button data-act="del" data-id="${esc(t.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div></div>`; };
-const linhaDesejo = d => {
+
+const linhaDesejo = (d, idx, total, modoPrio) => {
   const pl = d.status === 'Planejado';
+  const rank = d.prioridade || (idx + 1);
+  const rankCor = rank === 1 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300'
+    : rank <= 3 ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'
+    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
   const link = d.link ? `<a href="${esc(d.link)}" target="_blank" rel="noopener" class="text-violet-500 hover:underline text-[10px] ml-1"><i class="fa-solid fa-arrow-up-right-from-square"></i> Link</a>` : '';
-  return `<div class="p-3.5 flex justify-between items-center gap-2"><div class="min-w-0 space-y-0.5"><div class="flex items-center flex-wrap gap-1.5"><span class="text-xs font-bold truncate">${esc(d.nome)}</span><span class="text-[9px] px-1.5 py-0.5 rounded font-medium ${pl ? 'bg-amber-100 text-amber-700' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300'}">${pl ? 'Em ' + esc(d.abaPlanejada) : 'Na lista'}</span></div><p class="text-[10px] text-slate-400">${esc(d.categoria)}${d.subcategoria ? ' · ' + esc(d.subcategoria) : ''}${link}</p><p class="text-xs font-bold text-violet-500">${brl(d.valor)}</p></div><div class="flex items-center gap-1.5 shrink-0">${pl ? `<button data-act="des-dev" data-id="${esc(d.id)}" class="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Devolver</button>` : `<button data-act="des-plan" data-id="${esc(d.id)}" class="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Planejar</button>`}<button data-act="des-del" data-id="${esc(d.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div>`;
+  const setas = modoPrio ? `<div class="flex flex-col mr-1"><button data-act="des-up" data-id="${esc(d.id)}" ${idx === 0 ? 'disabled class="text-slate-200 dark:text-slate-700 px-1 text-[10px]"' : 'class="text-slate-400 hover:text-violet-500 px-1 text-[10px]"'}><i class="fa-solid fa-chevron-up"></i></button><button data-act="des-down" data-id="${esc(d.id)}" ${idx === total - 1 ? 'disabled class="text-slate-200 dark:text-slate-700 px-1 text-[10px]"' : 'class="text-slate-400 hover:text-violet-500 px-1 text-[10px]"'}><i class="fa-solid fa-chevron-down"></i></button></div>` : '';
+  return `<div class="p-3.5 flex justify-between items-center gap-2"><div class="flex items-center min-w-0 gap-1.5">${setas}<div class="min-w-0 space-y-0.5"><div class="flex items-center flex-wrap gap-1.5"><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${rankCor}">#${rank}</span><span class="text-xs font-bold truncate">${esc(d.nome)}</span><span class="text-[9px] px-1.5 py-0.5 rounded font-medium ${pl ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}">${pl ? 'Em ' + esc(d.abaPlanejada) : 'Na lista'}</span></div><p class="text-[10px] text-slate-400">${esc(d.categoria)}${d.subcategoria ? ' · ' + esc(d.subcategoria) : ''}${link}</p><p class="text-xs font-bold text-violet-500">${brl(d.valor)}</p></div></div><div class="flex items-center gap-1.5 shrink-0">${pl ? `<button data-act="des-dev" data-id="${esc(d.id)}" class="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Devolver</button>` : `<button data-act="des-plan" data-id="${esc(d.id)}" class="px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">Planejar</button>`}<button data-act="des-del" data-id="${esc(d.id)}" class="text-slate-300 hover:text-rose-500 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button></div></div>`;
 };
 
 function ordenarMes(lista) {
@@ -626,14 +669,26 @@ function ordenarMes(lista) {
   });
 }
 
+function ordenarDesejos(lista) {
+  const o = $('ordem-desejos').value;
+  return [...lista].sort((a, b) => {
+    if (o === 'valor-asc') return a.valor - b.valor || a.prioridade - b.prioridade;
+    if (o === 'valor-desc') return b.valor - a.valor || a.prioridade - b.prioridade;
+    return a.prioridade - b.prioridade;
+  });
+}
+
 function render() {
+  normalizarPrioridades();
   const aba = abaDe($('filtro-mes').value);
   const pend = tx.filter(t => t.status === 'Planejado').sort((a, b) => a.data.localeCompare(b.data));
   $('lista-pendentes').innerHTML = pend.length ? pend.map(linhaPend).join('') : '<div class="p-4 text-center text-xs text-slate-400">Tudo em dia! Sem pendências.</div>';
   const mes = ordenarMes(tx.filter(t => t.aba === aba));
   $('lista-transacoes').innerHTML = mes.length ? mes.map(linhaCons).join('') : '<div class="p-6 text-center text-slate-400 text-sm">Nenhum registro no mês. Toque na nuvem para sincronizar.</div>';
   $('total-registros').textContent = `${mes.length} reg.`;
-  $('lista-desejos').innerHTML = desejos.length ? desejos.map(linhaDesejo).join('') : '<div class="p-6 text-center text-slate-400 text-xs">Nenhum desejo cadastrado ainda.</div>';
+  const modoPrio = $('ordem-desejos').value === 'prio';
+  const desOrd = ordenarDesejos(desejos);
+  $('lista-desejos').innerHTML = desOrd.length ? desOrd.map((d, i) => linhaDesejo(d, i, desOrd.length, modoPrio)).join('') : '<div class="p-6 text-center text-slate-400 text-xs">Nenhum desejo cadastrado ainda.</div>';
   $('total-desejos').textContent = `${desejos.length} ${desejos.length === 1 ? 'item' : 'itens'}`;
   const soma = (tp, st) => r2(mes.filter(t => t.tipo === tp && t.status === st).reduce((a, t) => a + t.valor, 0));
   const re = soma('Receita', 'Executado'), rp = soma('Receita', 'Planejado'), de = soma('Despesa', 'Executado'), dp = soma('Despesa', 'Planejado');
@@ -652,7 +707,6 @@ function renderCatChart() {
   const desp = mesChart.filter(t => t.tipo === 'Despesa');
   btn.classList.toggle('hidden', !drill.cat);
 
-  // Nível 3: Lista de lançamentos (da subcategoria ou da categoria inteira)
   if (drill.cat && drill.sub) {
     const todos = drill.sub === '__ALL__';
     tit.textContent = todos ? `${drill.cat} › Todos` : `${drill.cat} › ${drill.sub}`;
@@ -680,7 +734,6 @@ function renderCatChart() {
     return;
   }
 
-  // Níveis 1 e 2: Gráfico de barras sobrepostas (Executado sólido + Planejado esmaecido)
   wrap.classList.remove('hidden');
   leg.classList.remove('hidden');
   det.classList.add('hidden');
